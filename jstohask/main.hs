@@ -12,7 +12,6 @@ type CoinId = (TxId, Int)
 type CoinStateMap coinState = Map.Map CoinId coinState
 data Tx txPayload = Tx { colorTx :: ColorTx txPayload, inputs :: [CoinId], txId :: TxId }
  
--- applyTx :: ColorKernel txPayload coinState -> Tx txPayload -> CoinStateMap coinState -> CoinStateMap coinState
 instance Eq (Tx txPayload) where
   a == b = txId a == txId b
 
@@ -67,8 +66,3 @@ tx6 = Tx colortx  [("3", 8)]           "6"
  
                                           
 main = print $ topologicalSort [tx2, tx3, tx1, tx4, tx5, tx6] [tx4, tx2, tx3, tx6, tx1, tx5]
-
-
---main = print (applyColorKernel trivialColorKernel tx inputs)
---       where tx = ColorTx "[1]" [0] [0] 1
---             inputs = [Just 1]
