@@ -2,7 +2,6 @@ module TransactionGraph where
 
 import CoinKernel
 import qualified Data.Map as Map
-
   
 
 topologicalSort :: [Tx a] -> [Tx a]-> [Tx a]                        
@@ -29,11 +28,7 @@ notMissingCS :: WrappedCS cs -> Bool
 notMissingCS MissingCS = False
 notMissingCS _         = True
 
-
-foldTxGraph :: [Tx a] ->
-               (Tx a -> Map.Map Int (WCSCoinKernel String cs) ->
-               Map.Map Int (WCSCoinKernel String cs)) ->
-               Map.Map Int (WCSCoinKernel String cs)
+foldTxGraph :: [a] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
 foldTxGraph g apply = foldl applyTx' Map.empty g 
   where applyTx' acc tx = apply tx acc
 

@@ -5,10 +5,10 @@ function run_coin_kernel_on_graph(kernel_name, transactions) {
     var arr = [];
     for (var i = 0; i < transactions.length; i++) {
         var json = {};
-        json.pload    = get_payload(transactions[i]);
-        json.ins      = get_inputs(transactions[i]);
-        json.outs = transactions[i].outs.length;
-        json.txid     = get_txid(transactions[i]);        
+        json.txPayload     = get_payload(transactions[i]);
+        json.txInputs      = get_inputs(transactions[i]);
+        json.txOutputCount = transactions[i].outs.length;
+        json.txID          = transactions[i].getId();        
         arr[i] = JSON.stringify(json);
     }
     return Haste[kernel_name](arr);
@@ -43,9 +43,6 @@ function get_inputs(transaction) {
     return inputs;
 }
 
-function get_txid(transaction) {
-    //??????????????????????????????????
-}
 
 exports.run_coin_kernel_on_graph = run_coin_kernel_on_graph;
 exports.get_mux_shape            = get_mux_shape;
