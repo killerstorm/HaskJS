@@ -2,7 +2,7 @@
 import Haste.Foreign
 import Haste
 import Haste.Prim 
-import Haste.JSON
+import Haste.JSON as J
 import Haste.Parsing
 import Haste.Serialize 
 import Data.Either
@@ -14,38 +14,59 @@ import CoinKernel
 import TransactionGraph
 
 ins       = toJSStr "ins"
+pload     = toJSStr "pload"
+txid      = toJSStr "txid"
 outs      = toJSStr "outs"
-hash      = toJSStr "hash"
+hashHex   = toJSStr "hashHex"
 index     = toJSStr "index"
-script    = toJSStr "script"
-buffer    = toJSStr "buffer"
-chunks    = toJSStr "chunks"
-sequence' = toJSStr "sequence"
-value     = toJSStr "value"
-version   = toJSStr "version"
-locktime  = toJSStr "locktime"
-nothing   = toJSStr "nothing"
 ob        = "{"
 cb        = "}"
 cn        = ":"
 cm        = ","
 
-instance Pack JSON
-instance Unpack JSON
+{--
+instance Serialize (Tx String) where
+  
+  toJSON j = toJSON $ toJSStr $
+     ob  ++ (Prelude.foldr (\x acc -> fst x ++ acc) "" (inputs j)) ++ cb
 
-instance Pack (Tx a)
-instance Unpack (Tx a)
+  parseJSON j = do
+     a <- j .: pload
+     b <- j .: ins
+     c <- j .: txid
+     d <- j .: outcount
+     return $ Tx a b c d
 
-instance Serialize (Tx a) where
-
---  toJSON (Tx a)
---  parseJSON j =
-    
 
 runParser' :: (a -> Parser b) -> a -> Either String b
 runParser' p x = case p x of Parser y -> y
+--}
+jsonToStr :: JSON -> JSString -> String
+jsonToStr j s = fromJSStr . encodeJSON $ (J.!) j s
+
+parseToTx :: JSString -> Tx String
+parseToTx s = Tx a b c d
+  where Right json = decodeJSON s
+        a  = jsonToStr json pload
+        b  = getInputs (json J.! ins) 0 []
+        c  = jsonToStr json txid
+        d  = (\x -> read x :: Int) $ jsonToStr json outs
+
+getInputs :: JSON -> Int -> [CoinId] -> [CoinId]
+getInputs j c acc = 
+    case j J.~> toJSStr (show c) of
+      Just x -> getInputs j (c + 1) $ (: acc)
+                (jsonToStr x hashHex, (\x -> read x :: Int) $ jsonToStr x  index)
+      _      -> acc
 
 
+runCoinKernel :: [JSString] -> IO JSString
+runCoinKernel s = return $ toJSStr a 
+  where x = parseToTx $ head s
+        a = txId x
+                        
+getMuxShape :: JSString -> IO JSString
+getMuxShape s = return s
 
         
 main = do

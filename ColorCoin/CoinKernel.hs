@@ -4,10 +4,7 @@ import qualified Data.Map as Map
 
 type TxId = String
 type CoinId = (TxId, Int)
-data Tx a = Tx { payload :: a, inputs :: [CoinId], txId :: TxId, outputCount :: Int}
-
-instance Show (Tx a) where
-  show a = "<" ++ show (txId a) ++ ">"
+data Tx a = Tx { payload :: a, inputs :: [CoinId], txId :: TxId, outputCount :: Int} deriving Show
   
 instance Eq (Tx a) where
   a == b = txId a == txId b

@@ -1,10 +1,33 @@
 var ckernel = require ('./main.js')
-var bc = require('bitcoinjs-lib');
+const bc = require('bitcoinjs-lib');
 var Transaction = bc.Transaction;
-
-var tx = Transaction.fromHex('010000000189632848f99722915727c5c75da8db2dbf194342a0429828f66ff88fab2af7d600000000fd1b0100483045022100e5be20d440b2bbbc886161f9095fa6d0bca749a4e41d30064f30eb97adc7a1f5022061af132890d8e4e90fedff5e9365aeeb77021afd8ef1d5c114d575512e9a130a0147304402205054e38e9d7b5c10481b6b4991fde5704cd94d49e344406e3c2ce4d18a43bf8e022051d7ba8479865b53a48bee0cce86e89a25633af5b2918aa276859489e232f51c014c8752410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b84104c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee51ae168fea63dc339a3c58419466ceaeef7f632653266d0e1236431a950cfe52a52aeffffffff0101000000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000');
-
-
+var crypt = require('crypto');
+var buftools = require('buffertools').extend();
 
 
+function encrypt(tx) {
+    sha256.update(tx, 'hex');
+    return sha256.digest('hex');
+}
 
+
+var tx = Transaction.fromHex('0100000001993a052baad64bccccb3c32f1603e95457949c33208052ba6893a1c8fc3bfadb000000006b483045022100d38cd30a2b34275b1f4054d56e7ab35a87cc0cd83e7ae4747e641fd696f4b764022076017c72dab2cef85016330d2a1798c5820955708adfcb23410caef92d3b58c40121022539abaecacca3e643bdadfd5f34f52e39fc1c5d6863536fb987d37999a55cdeffffffff0458020000000000001976a914cadeb078e53c27c75e3e1d9e6399ef90cafc456b88ac0000000000000000096a074f410100010900104e3800000000001976a9148e9c9a0187f0da5c69f4d7d35cf40e862e14653a88ac28180600000000001976a914cadeb078e53c27c75e3e1d9e6399ef90cafc456b88ac00000000');
+
+var t = {};
+t.payload = ckernel.get_payload(tx);
+t.inputs = ckernel.get_inputs(tx);
+t.outCount = tx.outs.length;
+
+
+
+//res = cr.x2(tx2);
+//console.log(t);
+//CoinId(hashHex, index)
+//console.log(ckernel.get_payload(tx).toString());
+//console.log(tx.ins[0].index);
+//console.log(((tx.ins[0].hash)).toString('hex'));
+var arrr = [];
+arrr[0] = tx;
+arrr[1] = tx;
+console.log(ckernel.run_coin_kernel_on_graph("runCoinKernel", arrr));
+//console.log(tx);
