@@ -41,6 +41,7 @@ instance Serialize (Tx String) where
 runParser' :: (a -> Parser b) -> a -> Either String b
 runParser' p x = case p x of Parser y -> y
 --}
+
 jsonToStr :: JSON -> JSString -> String
 jsonToStr j s = fromJSStr . encodeJSON $ (J.!) j s
 
@@ -60,13 +61,12 @@ getInputs j c acc =
       _      -> acc
 
 
-runCoinKernel :: [JSString] -> IO JSString
-runCoinKernel s = return $ toJSStr a 
-  where x = parseToTx $ head s
-        a = txId x
+runCoinKernel :: [JSString] -> -- ?????????????????
+runCoinKernel s =  return $    -- ????????????????
+
                         
-getMuxShape :: JSString -> IO JSString
-getMuxShape s = return s
+getMuxShape :: JSString -> -- ??????????????
+getMuxShape s = return     -- ??????????????
 
         
 main = do

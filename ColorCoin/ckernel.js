@@ -8,14 +8,14 @@ function run_coin_kernel_on_graph(kernel_name, transactions) {
         json.pload    = get_payload(transactions[i]);
         json.ins      = get_inputs(transactions[i]);
         json.outs = transactions[i].outs.length;
-        json.txid     = i;        
+        json.txid     = get_txid(transactions[i]);        
         arr[i] = JSON.stringify(json);
     }
     return Haste[kernel_name](arr);
 }
 
 function get_mux_shape(kernel_name, payload) {
-    
+        //????????????????????   
 }
 
 function maybe_get_op_return(script) {
@@ -44,7 +44,7 @@ function get_inputs(transaction) {
 }
 
 function get_txid(transaction) {
-    
+    //??????????????????????????????????
 }
 
 exports.run_coin_kernel_on_graph = run_coin_kernel_on_graph;
