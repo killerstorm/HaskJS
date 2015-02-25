@@ -13,10 +13,10 @@ import Data.Map as Map
 import CoinKernel
 import TransactionGraph
 
-ins       = toJSStr "ins"
-pload     = toJSStr "pload"
-txid      = toJSStr "txid"
-outs      = toJSStr "outs"
+txInputs       = toJSStr "txInputs"
+txPayload      = toJSStr "txPayload"
+txID           = toJSStr "txID"
+txOutputCount  = toJSStr "txOutputCount"
 hashHex   = toJSStr "hashHex"
 index     = toJSStr "index"
 ob        = "{"
@@ -42,16 +42,20 @@ runParser' :: (a -> Parser b) -> a -> Either String b
 runParser' p x = case p x of Parser y -> y
 --}
 
+apply' = (applyTx (toyMuxCoinKernel
+           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))))
+
+
 jsonToStr :: JSON -> JSString -> String
 jsonToStr j s = fromJSStr . encodeJSON $ (J.!) j s
 
 parseToTx :: JSString -> Tx String
 parseToTx s = Tx a b c d
   where Right json = decodeJSON s
-        a  = jsonToStr json pload
-        b  = getInputs (json J.! ins) 0 []
-        c  = jsonToStr json txid
-        d  = (\x -> read x :: Int) $ jsonToStr json outs
+        a  = jsonToStr json txPayload
+        b  = getInputs (json J.! txInputs) 0 []
+        c  = jsonToStr json txID
+        d  = (\x -> read x :: Int) $ jsonToStr json txOutputCount
 
 getInputs :: JSON -> Int -> [CoinId] -> [CoinId]
 getInputs j c acc = 
@@ -61,12 +65,12 @@ getInputs j c acc =
       _      -> acc
 
 
-runCoinKernel :: [JSString] -> -- ?????????????????
-runCoinKernel s =  return $    -- ????????????????
-
+runCoinKernel :: [JSString] -> IO JSString
+runCoinKernel xs = return $ toJSStr . show $ foldTxGraph g apply'
+  where g = Prelude.foldl (\acc x -> parseToTx x : acc) [] xs
                         
-getMuxShape :: JSString -> -- ??????????????
-getMuxShape s = return     -- ??????????????
+getMuxShape :: JSString -> IO JSString
+getMuxShape s = return s
 
         
 main = do
