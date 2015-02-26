@@ -4,11 +4,13 @@ import Haste
 import Haste.Prim 
 import Haste.JSON as J
 import Haste.Parsing
-import Haste.Serialize 
+--import Haste.Serialize 
 import Data.Either
 import Control.Applicative
 
-import Data.Map as Map
+import qualified Data.Map as Map
+
+import Debug.Trace
 
 import CoinKernel
 import TransactionGraph
@@ -17,35 +19,27 @@ txInputs       = toJSStr "txInputs"
 txPayload      = toJSStr "txPayload"
 txID           = toJSStr "txID"
 txOutputCount  = toJSStr "txOutputCount"
-hashHex   = toJSStr "hashHex"
-index     = toJSStr "index"
-ob        = "{"
-cb        = "}"
-cn        = ":"
-cm        = ","
-
-{--
-instance Serialize (Tx String) where
-  
-  toJSON j = toJSON $ toJSStr $
-     ob  ++ (Prelude.foldr (\x acc -> fst x ++ acc) "" (inputs j)) ++ cb
-
-  parseJSON j = do
-     a <- j .: pload
-     b <- j .: ins
-     c <- j .: txid
-     d <- j .: outcount
-     return $ Tx a b c d
+hashHex        = toJSStr "hashHex"
+index          = toJSStr "index"
 
 
-runParser' :: (a -> Parser b) -> a -> Either String b
-runParser' p x = case p x of Parser y -> y
---}
+coinstateMap = Map.fromList [(("2", 1), JustCS 1), (("3", 6), NullCS)]
 
 apply' = (applyTx (toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))))
 
 
+--packToJS :: Map.Map CoinId (WrappedCS cs) -> [JSString]
+packToJS m = Prelude.foldr f [] $ Map.toList m
+  where f x acc = (: acc) $ toJSStr $
+                  "{" ++ "\"hashHex\""    ++ ":" ++ "\"" ++ a ++ "\"" ++ "," ++
+                         "\"index\""      ++ ":" ++ b ++ "," ++
+                         "\"coinState\""  ++ ":" ++ c ++ "}"              
+                  where 
+                        a = fst $ fst x
+                        b = show . snd $ fst x
+                        c = show $ snd x 
+ 
 jsonToStr :: JSON -> JSString -> String
 jsonToStr j s = fromJSStr . encodeJSON $ (J.!) j s
 
@@ -61,12 +55,12 @@ getInputs :: JSON -> Int -> [CoinId] -> [CoinId]
 getInputs j c acc = 
     case j J.~> toJSStr (show c) of
       Just x -> getInputs j (c + 1) $ (: acc)
-                (jsonToStr x hashHex, (\x -> read x :: Int) $ jsonToStr x  index)
+                (jsonToStr x hashHex, (\x -> read x :: Int) $ jsonToStr x index)
       _      -> acc
 
 
-runCoinKernel :: [JSString] -> IO JSString
-runCoinKernel xs = return $ toJSStr . show $ foldTxGraph g apply'
+runCoinKernelOnGraph :: [JSString] -> IO [JSString]
+runCoinKernelOnGraph xs = return . packToJS $ foldTxGraph g apply'
   where g = Prelude.foldl (\acc x -> parseToTx x : acc) [] xs
                         
 getMuxShape :: JSString -> IO JSString
@@ -74,6 +68,6 @@ getMuxShape s = return s
 
         
 main = do
-  export (toJSStr "runCoinKernel") runCoinKernel
+  export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
   export (toJSStr "getMuxShape") getMuxShape
 
