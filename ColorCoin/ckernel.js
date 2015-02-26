@@ -1,6 +1,3 @@
-function init() {
-}
-    
 function run_coin_kernel_on_graph(kernel_name, transactions) {
     var arr = [];
     for (var i = 0; i < transactions.length; i++) {
