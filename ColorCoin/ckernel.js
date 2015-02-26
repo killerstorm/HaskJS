@@ -11,8 +11,8 @@ function run_coin_kernel_on_graph(kernel_name, transactions) {
     return Haste[kernel_name](arr);
 }
 
-function get_mux_shape(kernel_name, payload) {
-    return Haste[kernel_name](payload);   
+function get_mux_shape(payload) {
+    return Haste["getMuxShape"](payload);   
 }
 
 function maybe_get_op_return(script) {
