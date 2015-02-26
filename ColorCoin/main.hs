@@ -28,10 +28,12 @@ coinstateMap = Map.fromList [(("2", 1), JustCS 1), (("3", 6), NullCS)]
 apply' = (applyTx (toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))))
 
+kernel = toyMuxCoinKernel
+           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))
 
---packToJS :: Map.Map CoinId (WrappedCS cs) -> [JSString]
-packToJS m = Prelude.foldr f [] $ Map.toList m
-  where f x acc = (: acc) $ toJSStr $
+--packToJS :: Map.Map CoinId (WrappedCS cs) -> [String]
+packToString m = Prelude.foldr f [] $ Map.toList m
+  where f x acc = (: acc) $ 
                   "{" ++ "\"hashHex\""    ++ ":" ++ "\"" ++ a ++ "\"" ++ "," ++
                          "\"index\""      ++ ":" ++ b ++ "," ++
                          "\"coinState\""  ++ ":" ++ c ++ "}"              
@@ -59,12 +61,12 @@ getInputs j c acc =
       _      -> acc
 
 
-runCoinKernelOnGraph :: [JSString] -> IO [JSString]
-runCoinKernelOnGraph xs = return . packToJS $ foldTxGraph g apply'
+runCoinKernelOnGraph :: [JSString] -> IO [String]
+runCoinKernelOnGraph xs = return . packToString $ foldTxGraph g apply'
   where g = Prelude.foldl (\acc x -> parseToTx x : acc) [] xs
                         
-getMuxShape :: JSString -> IO JSString
-getMuxShape s = return s
+getMuxShape :: String -> IO String
+getMuxShape payload = return $  show $ kernel payload [JustCS 1, JustCS 3]
 
         
 main = do
