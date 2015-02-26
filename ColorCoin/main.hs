@@ -62,14 +62,14 @@ getInputs j c acc =
 
 
 runCoinKernelOnGraph :: [JSString] -> IO [String]
-runCoinKernelOnGraph xs = return . packToString $ foldTxGraph g apply'
+runCoinKernelOnGraph xs = return . packToString $ foldTxGraph (topologicalSort g g) apply'
   where g = Prelude.foldl (\acc x -> parseToTx x : acc) [] xs
                         
-getMuxShape :: String -> IO String
-getMuxShape payload = return $  show $ kernel payload [JustCS 1, JustCS 3]
+--getMuxShape :: String -> IO String
+--getMuxShape payload = return $  show $ kernel payload [JustCS 1, JustCS 3]
 
         
 main = do
   export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
-  export (toJSStr "getMuxShape") getMuxShape
+  --export (toJSStr "getMuxShape") getMuxShape
 

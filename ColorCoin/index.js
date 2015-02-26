@@ -19,7 +19,6 @@ var array = [];
 array[0] = tx;
 array[1] = tx2;
 console.log(ckernel.run_coin_kernel_on_graph("runCoinKernelOnGraph", array));
-console.log(ckernel.get_payload(tx2));
-console.log(ckernel.get_mux_shape("getMuxShape", ckernel.get_payload(tx2)));
+
 
 
