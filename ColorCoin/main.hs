@@ -4,7 +4,6 @@ import Haste
 import Haste.Prim 
 import Haste.JSON as J
 import Haste.Parsing
---import Haste.Serialize 
 import Data.Either
 import Control.Applicative
 
