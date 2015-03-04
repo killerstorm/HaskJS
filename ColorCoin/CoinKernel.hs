@@ -1,5 +1,5 @@
 module CoinKernel where
-
+import Debug.Trace
 import qualified Data.Map as Map
 
 type TxId = String
@@ -36,12 +36,13 @@ invalidCS InvalidCS = True
 invalidCS _ = False
  
 remapInputs :: [Int] -> [WrappedCS a] -> [WrappedCS a]
-remapInputs inputIndices inputs = map getinput inputIndices
+remapInputs inputIndices inputs = trace ("remapInputs" ++ show inputIndices) $
+                                  map getinput inputIndices
   where getinput i = if (i < length inputs)
                      then inputs !! i
                      else InvalidCS
  
-remapOutputs outputIndices outputCount outputs = 
+remapOutputs outputIndices outputCount outputs = trace ("remapOutputs") $  
   let idxmap = Map.fromList (zip outputIndices (if (length outputs) == (length outputIndices)
                                                then outputs
                                                else (replicate (length outputIndices) InvalidCS)))
@@ -50,50 +51,53 @@ remapOutputs outputIndices outputCount outputs =
              Nothing -> NullCS) [0..outputCount - 1]
  
 strictTransactor :: Transactor a -> WCSTransactor a
-strictTransactor txop inputs = if (all properCS inputs)
+strictTransactor txop inputs = trace ("strict transactor") $ 
+                               if (all properCS inputs)
                                then map JustCS $ txop (map (\(JustCS cs) -> cs) inputs)
                                else []
  
  
 strictCoinKernel :: CoinKernel tx a -> WCSCoinKernel tx a
-strictCoinKernel innerKernel = \tx -> strictTransactor (innerKernel tx)
+strictCoinKernel innerKernel = trace ("strictCoinKernel") $ \tx -> strictTransactor (innerKernel tx)
  
  
 strictMux :: WCSTransactor a -> MuxShape -> WCSTransactor a
-strictMux txop (inputIndices, outputIndices, outputCount) inputs = 
+strictMux txop (inputIndices, outputIndices, outputCount) inputs =
+  trace ("StrictMux") $ 
   let rInputs = remapInputs inputIndices inputs
-      outputs = if any invalidCS rInputs
-                then replicate outputCount InvalidCS
-                else if any missingCS rInputs
-                     then replicate outputCount MissingCS
-                     else txop rInputs
+      outputs | any invalidCS rInputs = replicate outputCount InvalidCS
+              | any missingCS rInputs = replicate outputCount MissingCS
+              | otherwise             = txop rInputs
   in remapOutputs outputIndices outputCount outputs
  
 parseMuxShape :: String -> Maybe (MuxShape, String)
-parseMuxShape s = case (reads s) of
-  [res] -> Just res
-  _ -> Nothing
+parseMuxShape s = trace ("parseMuxShape") $  case (reads s) of
+  [res] -> trace ("    ParseMuxShape showing res " ++ show [res]) $Just res
+  _ -> trace ("    Nothing") $ Nothing
      
 toyMuxCoinKernel :: WCSCoinKernel String cs -> WCSCoinKernel String cs
-toyMuxCoinKernel innerKernel = \str-> case parseMuxShape str of
-  Just (muxShape, rest) -> strictMux (innerKernel rest) muxShape
-  Nothing -> const []
+toyMuxCoinKernel innerKernel = trace ("ToyMuxCoinKernel") $ \str -> case parseMuxShape str of
+  Just (muxShape, rest) -> trace ("    ToymuxCoinKernel" ++ show muxShape ++ " ___ " ++  show rest) $
+                           strictMux (innerKernel rest) muxShape
+  Nothing -> trace ("    toyMuxCoinKernel Nothing") $ const []
  
  
 parseId :: String -> Maybe (Int, String)
-parseId s = case (reads s) of
-  [res] -> Just res
-  _ -> Nothing
+parseId s = trace ("parseId") $ case (reads s) of
+  [res] -> trace ("    parseId " ++ show [res]) $ Just res
+  _ ->  trace ("    parseId _ ") $ Nothing
   
 toyDispatchCoinKernel :: Map.Map Int (WCSCoinKernel String cs) -> WCSCoinKernel String cs
-toyDispatchCoinKernel table str = case parseId str of
-  Just (opid, rest) -> case Map.lookup opid table of
-    Just ke -> ke rest
-    Nothing -> const []
-  Nothing -> const []
+toyDispatchCoinKernel table str = trace ("toydispatchCoinKernel") $  case parseId str of
+  Just (opid, rest) -> trace ("    opid -- rest " ++ show opid ++ show rest) $
+                       case Map.lookup opid table of
+    Just ke -> trace ("        ke rest" ++ show rest) $ ke rest
+    Nothing -> trace ("        Nothing") $ const []
+  Nothing -> trace ("    NOTHING") $ const []
                                        
 trivialCoinKernel :: String -> [Integer] -> [Integer]
-trivialCoinKernel op in_values = let out_values :: [Integer]
+trivialCoinKernel op in_values = trace ("trivialCoinKernel") $
+                                 let out_values :: [Integer]
                                      out_values = read op
                                  in if (sum in_values) == (sum out_values) 
                                     then out_values
