@@ -1,3 +1,6 @@
+var crypto = require('crypto');
+var buffertools = require('buffertools');
+
 function run_coin_kernel_on_graph(kernel_name, transactions) {
     var arr = [];
     for (var i = 0; i < transactions.length; i++) {
@@ -16,15 +19,20 @@ function get_mux_shape(payload) {
 }
 
 function maybe_get_op_return(script) {
-  if (script.chunks.length == 2 && script.chunks[0] == 106) {
-    return script.chunks[1];
-  } else { return null; }
+    if (script.chunks.length == 2 && script.chunks[0] == 106) {
+         return script.chunks[1];
+    } else { return null; }
 }
- 
+
+
+
+
 function get_payload(transaction) {
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
-      if (op_return) return op_return.toString('hex');
+      if (op_return) {
+          return buffertools.reverse(crypto.sha256(op_return)).toString('hex');
+      }
   }
   return "";
 }
