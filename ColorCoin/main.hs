@@ -60,10 +60,10 @@ packToString m = Prelude.foldr f [] $ Map.toList m
                         a = fst $ fst x
                         b = show . snd $ fst x
                         c = show $ snd x 
- 
+{-- 
 jsonToStr :: JSON -> JSString -> String
 jsonToStr j s = fromJSStr . encodeJSON $ (J.!) j s
-{--
+
 parseToTx :: JSON -> Tx String
 parseToTx json = trace ("payload = " ++ show c) $ Tx a b c d
   where 
@@ -71,7 +71,7 @@ parseToTx json = trace ("payload = " ++ show c) $ Tx a b c d
         b  = getInputs (json J.! txInputs) 0 []
         c  = jsonToStr json txID
         d  = (\x -> read x :: Int) $ jsonToStr json txOutputCount
---}
+
 
 getInputs :: JSON -> Int -> [CoinId] -> [CoinId]
 getInputs j c acc = 
@@ -79,7 +79,7 @@ getInputs j c acc =
       Just x -> getInputs j (c + 1) $ (: acc)
                 (jsonToStr x hashHex, (\x -> read x :: Int) $ jsonToStr x index)
       _      -> acc
-
+--}
 
 runCoinKernelOnGraph :: [(String, [(String, Int)], String, Int)] -> IO [String]
 runCoinKernelOnGraph xs = return . packToString $ foldTxGraph (topologicalSort g g) apply'
