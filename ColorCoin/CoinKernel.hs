@@ -76,9 +76,9 @@ parseMuxShape s = case (reads s) of
   _ -> Nothing
      
 toyMuxCoinKernel :: WCSCoinKernel String cs -> WCSCoinKernel String cs
-toyMuxCoinKernel innerKernel = \str-> trace ("toymuxcoinkernel") $ case parseMuxShape str of
-  Just (muxShape, rest) -> trace ("muxhshape " ++ show muxShape) $ strictMux (innerKernel rest) muxShape
-  Nothing -> trace ("not mux shape") $ const []
+toyMuxCoinKernel innerKernel = \str-> case parseMuxShape str of
+  Just (muxShape, rest) -> strictMux (innerKernel rest) muxShape
+  Nothing -> const []
  
  
 parseId :: String -> Maybe (Int, String)
