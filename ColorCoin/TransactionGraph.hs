@@ -3,6 +3,8 @@ module TransactionGraph where
 import CoinKernel
 import qualified Data.Map as Map
   
+import Debug.Trace
+
 
 topologicalSort :: [Tx a] -> [Tx a]-> [Tx a]                        
 topologicalSort g tx = tsort tx []        
@@ -15,7 +17,7 @@ topologicalSort g tx = tsort tx []
 
 -- ???? applyTx :: (ColorTx txPayload -> [coinState] -> [coinState]) ->
 --                  Tx txPayload -> CoinStateMap coinState -> CoinStateMap coinState
-applyTx  kernel tx csMap = Map.union csMap (Map.fromList validOutputCoins)
+applyTx  kernel tx csMap   = Map.union csMap (Map.fromList validOutputCoins)
   where ins                = map (\x -> case Map.lookup x csMap of
                                      Nothing        -> MissingCS
                                      Just x         -> x) (inputs tx)
