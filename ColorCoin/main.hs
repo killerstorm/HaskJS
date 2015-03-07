@@ -4,6 +4,7 @@ import Haste
 import Haste.Prim 
 import Haste.JSON as J
 import Haste.Parsing
+import Haste.Serialize
 import Data.Either
 import Control.Applicative
 
@@ -14,12 +15,32 @@ import Debug.Trace
 import CoinKernel
 import TransactionGraph
 
+instance Pack JSON
+instance Unpack JSON
+
+
+instance Pack (Tx String)
+instance Unpack (Tx String)
+
 txInputs       = toJSStr "txInputs"
 txPayload      = toJSStr "txPayload"
 txID           = toJSStr "txID"
 txOutputCount  = toJSStr "txOutputCount"
 hashHex        = toJSStr "hashHex"
 index          = toJSStr "index"
+
+
+{-
+instance Serialize (Tx String) where
+  toJSON (Tx a b c d) = toJSON $ toJSStr "test"
+
+  parseJSON j =
+    Tx <$>
+        j .: txPayload
+    <*> j .: txInputs
+    <*> j .: txOutputCount
+    <*> j .: txID
+-}
 
 
 coinstateMap = Map.fromList [(("2", 1), JustCS 1), (("3", 6), NullCS)]
@@ -30,7 +51,6 @@ apply' = (applyTx (toyMuxCoinKernel
 kernel = toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))
 
---packToJS :: Map.Map CoinId (WrappedCS cs) -> [String]
 packToString m = Prelude.foldr f [] $ Map.toList m
   where f x acc = (: acc) $ 
                   "{" ++ "\"hashHex\""    ++ ":" ++ "\"" ++ a ++ "\"" ++ "," ++
@@ -43,14 +63,15 @@ packToString m = Prelude.foldr f [] $ Map.toList m
  
 jsonToStr :: JSON -> JSString -> String
 jsonToStr j s = fromJSStr . encodeJSON $ (J.!) j s
-
-parseToTx :: JSString -> Tx String
-parseToTx s = Tx a b c d
-  where Right json = decodeJSON s
-        a  = jsonToStr json txPayload
+{--
+parseToTx :: JSON -> Tx String
+parseToTx json = trace ("payload = " ++ show c) $ Tx a b c d
+  where 
+        a  = tail . init $ jsonToStr json txPayload
         b  = getInputs (json J.! txInputs) 0 []
         c  = jsonToStr json txID
         d  = (\x -> read x :: Int) $ jsonToStr json txOutputCount
+--}
 
 getInputs :: JSON -> Int -> [CoinId] -> [CoinId]
 getInputs j c acc = 
@@ -60,18 +81,23 @@ getInputs j c acc =
       _      -> acc
 
 
-runCoinKernelOnGraph :: [JSString] -> IO [String]
+runCoinKernelOnGraph :: [(String, [(String, Int)], String, Int)] -> IO [String]
 runCoinKernelOnGraph xs = return . packToString $ foldTxGraph (topologicalSort g g) apply'
-  where g = Prelude.foldl (\acc x -> parseToTx x : acc) [] xs
+  where g = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
                         
 getMuxShape :: String -> IO String
 getMuxShape payload = return $ ms
   where ms = case parseMuxShape payload of
-          Just x -> show x
+          Just x -> show $ fst x
           _      -> "Nothing"
 
-        
+test :: [(String, [(String, Int)], String, Int)] -> IO JSString
+test transactions = return $ toJSStr $ payload $ head tx
+    where tx = map (\(a, b, c, d) -> Tx a b c d) transactions
+
+
+
 main = do
   export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
   export (toJSStr "getMuxShape") getMuxShape
-
+  export (toJSStr "test") test

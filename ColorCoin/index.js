@@ -1,5 +1,6 @@
-var ckernel = require ('./main.js')
+var ckernel = require ('./main.js');
 const bc = require('bitcoinjs-lib');
+const bt = require('buffertools');
 var Transaction = bc.Transaction;
 
 
@@ -9,8 +10,6 @@ var tx2 = Transaction.fromHex('0100000001000000000000000000000000000000000000000
 
 var array = [];
 array[0] = tx;
-array[1] = tx2;
+array[1] = tx;
+
 console.log(ckernel.run_coin_kernel_on_graph("runCoinKernelOnGraph", array));
-console.log(ckernel.get_mux_shape(ckernel.get_payload(tx2)));
-
-

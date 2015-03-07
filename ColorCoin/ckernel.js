@@ -4,12 +4,12 @@ var buffertools = require('buffertools');
 function run_coin_kernel_on_graph(kernel_name, transactions) {
     var arr = [];
     for (var i = 0; i < transactions.length; i++) {
-        var json = {};
-        json.txPayload     = get_payload(transactions[i]);
-        json.txInputs      = get_inputs(transactions[i]);
-        json.txOutputCount = transactions[i].outs.length;
-        json.txID          = transactions[i].getId();        
-        arr[i] = JSON.stringify(json);
+        var tx = [];
+        json[0]    = _get_payload(transactions[i]);
+        json[1]    = (get_inputs(transactions[i]));
+        json[2]    = transactions[i].outs.length;
+        json[3]    = transactions[i].getId();        
+        arr[i] = tx;
     }
     return Haste[kernel_name](arr);
 }
@@ -24,32 +24,45 @@ function maybe_get_op_return(script) {
     } else { return null; }
 }
 
-
-
-
 function get_payload(transaction) {
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
       if (op_return) {
-          return buffertools.reverse(crypto.sha256(op_return)).toString('hex');
+          return buffertools.reverse(op_return).toString("hex");
       }
   }
   return "";
 }
 
+function _get_payload(transaction) {
+  for (var i = 0; i < transaction.outs.length; i++) {
+      var op_return = maybe_get_op_return(transaction.outs[i].script);
+      if (op_return) {
+          return "([0], [1], 1) 0 [1]";
+      }
+  }
+  return "";
+}
+
+
 function get_inputs(transaction) {
-    var inputs = {};
+    var inputs = [];
     for (var i = 0; i < transaction.ins.length; i++) {
-        var temp = {};
-        temp.hashHex = transaction.ins[i].hash.toString('hex');
-        temp.index   = transaction.ins[i].index;
+        var temp = [];
+        temp[0] = (transaction.ins[i].hash.toString('hex'));
+        temp[1] = (transaction.ins[i].index);
         inputs[i] = temp;
     }
     return inputs;
 }
 
 
-exports.run_coin_kernel_on_graph = run_coin_kernel_on_graph;
-exports.get_mux_shape            = get_mux_shape;
-exports.get_payload              = get_payload;
-exports.get_inputs               = get_inputs;
+
+
+module.exports = {
+    run_coin_kernel_on_graph : run_coin_kernel_on_graph,
+    get_mux_shape            : get_mux_shape,
+    get_payload              : get_payload,
+    get_inputs               : get_inputs,
+    _get_payload             : _get_payload
+}
