@@ -5,10 +5,10 @@ function run_coin_kernel_on_graph(kernel_name, transactions) {
     var arr = [];
     for (var i = 0; i < transactions.length; i++) {
         var tx = [];
-        json[0]    = _get_payload(transactions[i]);
-        json[1]    = (get_inputs(transactions[i]));
-        json[2]    = transactions[i].outs.length;
-        json[3]    = transactions[i].getId();        
+        tx[0]    = _get_payload(transactions[i]);
+        tx[1]    = (get_inputs(transactions[i]));
+        tx[2]    = transactions[i].outs.length;
+        tx[3]    = transactions[i].getId();        
         arr[i] = tx;
     }
     return Haste[kernel_name](arr);
