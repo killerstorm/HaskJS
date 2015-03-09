@@ -5,10 +5,10 @@ function run_coin_kernel_on_graph(kernel_name, transactions) {
     var arr = [];
     for (var i = 0; i < transactions.length; i++) {
         var tx = [];
-        tx[0]    = _get_payload(transactions[i]);
-        tx[1]    = (get_inputs(transactions[i]));
-        tx[2]    = transactions[i].outs.length;
-        tx[3]    = transactions[i].getId();        
+        tx.push(_get_payload(transactions[i]));
+        tx.push(get_inputs(transactions[i]));
+        tx.push(transactions[i].getId());
+        tx.push(transactions[i].outs.length);
         arr[i] = tx;
     }
     return Haste[kernel_name](arr);
@@ -38,7 +38,7 @@ function _get_payload(transaction) {
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
       if (op_return) {
-          return "([0], [1], 1) 0 [1]";
+          return "([0], [1], 1) 0 [0]";
       }
   }
   return "";
