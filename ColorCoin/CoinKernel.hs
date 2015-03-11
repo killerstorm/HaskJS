@@ -93,10 +93,10 @@ toyDispatchCoinKernel table str = case parseId str of
     Nothing -> const []
   Nothing -> const []
                                        
-trivialCoinKernel :: String -> [Integer] -> [Integer]
-trivialCoinKernel op in_values = let out_values :: [Integer]
-                                     out_values = read op
-                                 in if (sum in_values) == (sum out_values) 
+transferCK :: String -> [Integer] -> [Integer]
+transferCK op in_values =  let out_values :: [Integer]
+                               out_values = read op
+                           in if (sum in_values) == (sum out_values) 
                                     then out_values
                                     else []                            
 

@@ -3,8 +3,8 @@ import Haste.Foreign
 import Haste
 import Haste.Prim 
 import Haste.JSON as J
-import Haste.Parsing
-import Haste.Serialize
+--import Haste.Parsing
+--import Haste.Serialize
 import Data.Either
 import Control.Applicative
 
@@ -18,24 +18,11 @@ import TransactionGraph
 instance Pack JSON
 instance Unpack JSON
 
-
-instance Pack (Tx String)
-instance Unpack (Tx String)
-
-txInputs       = toJSStr "txInputs"
-txPayload      = toJSStr "txPayload"
-txID           = toJSStr "txID"
-txOutputCount  = toJSStr "txOutputCount"
-hashHex        = toJSStr "hashHex"
-index          = toJSStr "index"
-
-coinstateMap = Map.fromList [(("2", 1), JustCS 1), (("3", 6), NullCS)]
-
 apply' = (applyTx (toyMuxCoinKernel
-           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))))
+           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK))]))))
 
 kernel = toyMuxCoinKernel
-           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))
+           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK))]))
 
 packToString m = Prelude.foldr f [] $ Map.toList m
   where f x acc = (: acc) $ 
