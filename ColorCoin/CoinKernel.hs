@@ -100,4 +100,10 @@ transferCK op in_values =  let out_values :: [Integer]
                                     then out_values
                                     else []                            
 
-
+issueCK :: String -> [Integer] -> [Integer]
+issueCK op in_values = if null in_values
+                          then out_values
+                          else []
+                       where
+                         out_values :: [Integer]
+                         out_values = read op

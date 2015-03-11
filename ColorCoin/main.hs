@@ -22,7 +22,8 @@ apply' = (applyTx (toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK))]))))
 
 kernel = toyMuxCoinKernel
-           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK))]))
+           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
+                                                 (1, (strictCoinKernel issueCK))    ]))
 
 packToString m = Prelude.foldr f [] $ Map.toList m
   where f x acc = (: acc) $ 
