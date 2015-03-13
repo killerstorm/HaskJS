@@ -38,7 +38,7 @@ function _get_payload(transaction) {
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
       if (op_return) {
-          return "([0], [1], 1) 0 [0]";
+          return "([], [1, 4, 3, 1, 2], 5) 1 [5, 6]";
       }
   }
   return "";
@@ -56,11 +56,14 @@ function get_inputs(transaction) {
     return inputs;
 }
 
-
+function run_coin_kernel_on_issue(issuetx) {
+    return Haste["runCoinKernelOnIssue"](issuetx);
+}
 
 
 module.exports = {
     run_coin_kernel_on_graph : run_coin_kernel_on_graph,
+    run_coin_kernel_on_issue : run_coin_kernel_on_issue,
     get_mux_shape            : get_mux_shape,
     get_payload              : get_payload,
     get_inputs               : get_inputs,

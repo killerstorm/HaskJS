@@ -45,6 +45,11 @@ getMuxShape payload = return $ ms
           Just x -> show $ fst x
           _      -> "Nothing"
 
+runCoinKernelOnIssue :: (String, [CoinId]) -> IO [Int]
+runCoinKernelOnIssue (x, xs) = return $ map (\x -> snd x) xs
+
+
 main = do
   export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
+  export (toJSStr "runCoinKernelOnIssue") runCoinKernelOnIssue
   export (toJSStr "getMuxShape") getMuxShape
