@@ -11,8 +11,21 @@ function run_coin_kernel_on_graph(kernel_name, transactions) {
         tx.push(transactions[i].outs.length);
         arr[i] = tx;
     }
+    console.log(Haste);
     return Haste[kernel_name](arr);
 }
+
+function createTx(t) {
+    var tx = [];
+    tx.push(_get_payload(t));
+    tx.push(get_inputs(t));
+    tx.push(t.getId());
+    tx.push(t.outs.length);
+
+    return tx;
+}
+
+
 
 function get_mux_shape(payload) {
     return Haste["getMuxShape"](payload);   
@@ -38,7 +51,7 @@ function _get_payload(transaction) {
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
       if (op_return) {
-          return "([], [1, 4, 3, 1, 2], 5) 1 [5, 6]";
+          return "([], [0, 1, 2, 3], 4) 1 [3, 7, 8, 9]";
       }
   }
   return "";
@@ -60,8 +73,13 @@ function run_coin_kernel_on_issue(issuetx) {
     return Haste["runCoinKernelOnIssue"](issuetx);
 }
 
+function getHaste() {
+    return Haste
+}
 
 module.exports = {
+    getHaste                 : getHaste,
+    createTx                 : createTx,
     run_coin_kernel_on_graph : run_coin_kernel_on_graph,
     run_coin_kernel_on_issue : run_coin_kernel_on_issue,
     get_mux_shape            : get_mux_shape,
