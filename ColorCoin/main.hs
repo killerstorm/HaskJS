@@ -24,7 +24,6 @@ instance Unpack Integer
 instance Pack (WrappedCS Integer)
 instance Unpack (WrappedCS Integer)
 
-newtype Seed = Seed (Int, SR.StdGen)
 
 pick :: [a] -> a
 pick xs = (xs !!) $  fst $ Haste.randomR (0, length xs - 1) (mkSeed 5)
@@ -48,8 +47,12 @@ packToString m = Prelude.foldr f [] $ Map.toList m
                         b = show . snd $ fst x
                         c = show $ snd x 
 
-runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [String]
-runCoinKernelOnGraph xs = return . packToString $ foldTxGraph g apply'
+--runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [String]
+runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [(CoinId, Int)]
+runCoinKernelOnGraph xs = return $ map (\(a, b) -> case b of
+                                           JustCS x  -> (a, read (show x) :: Int)
+                                           _         -> (a, 0)) $
+                          Map.toList $ foldTxGraph g apply'
   where g = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
                         
 getMuxShape :: String -> IO String
@@ -57,13 +60,33 @@ getMuxShape payload = return $ ms
   where ms = case parseMuxShape payload of
           Just x -> show $ fst x
           _      -> "Nothing"
-
+{--
 runCoinKernel :: (String, [(CoinId, Integer)]) -> IO [String]
 runCoinKernel (x, xs) = return $ "":[] -- $ map (\x -> (show $ fst x) ++ (show $ snd x)) $  (coins 10 xs)
   where coins count unspent | count == 0  = unspent
                             | otherwise   = coins (count - 1) (Map.toList
-                                                           (foldTxGraph (getGraph unspent) apply') ++ unspent)
-        
+                                                           (foldTxGraph g apply') ++ unspent')
+                                            where (g, unspent') = getRandomGraph unspent
+
+
+
+
+runCoinKernel :: (String, [(CoinId, Integer)]) -> IO [(CoinId, Integer)]
+runCoinKernel (issueTxID, unspent) = do
+  (u, g) <- getRandomGraph unspent
+  return $ foldTxGraph g apply' ++ u
+  
+  
+
+getRandomGraph u = do
+  ri <- getRandomNum 3
+  
+
+
+
+ -}
+
+
 --TODO: Random coins pick. Create transactions with random payload. Run coinKernel and save result to unspent.
 --getGraph xs   =  (Tx (getPayload p) (inputs : []) "9" 1) : []
 --  where
@@ -78,7 +101,7 @@ getRandomNum n = getRand n []
               | counter == 0     = return acc
               | otherwise        = do
                      g <- SR.newStdGen
-                     let t = head $ SR.randomRs (1, n) g
+                     let t = head $ SR.randomRs (0, n) g
                      --print t
                      getRand (counter - 1) $ t  : acc
 
@@ -87,6 +110,6 @@ getRandomNum n = getRand n []
 
 main = do
   export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
-  export (toJSStr "runCoinKernel") runCoinKernel
+--  export (toJSStr "runCoinKernel") runCoinKernel
   export (toJSStr "getMuxShape") getMuxShape
   export (toJSStr "getRandomNum") getRandomNum
