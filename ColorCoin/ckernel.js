@@ -1,6 +1,6 @@
 var crypto = require('crypto');
 var buffertools = require('buffertools');
-
+/*
 function run_coin_kernel_on_graph(kernel_name, transactions) {
     var arr = [];
     for (var i = 0; i < transactions.length; i++) {
@@ -11,10 +11,9 @@ function run_coin_kernel_on_graph(kernel_name, transactions) {
         tx.push(transactions[i].outs.length);
         arr[i] = tx;
     }
-    console.log(Haste);
     return Haste[kernel_name](arr);
 }
-
+*/
 function createTx(t) {
     var tx = [];
     tx.push(_get_payload(t));
@@ -51,7 +50,7 @@ function _get_payload(transaction) {
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
       if (op_return) {
-          return "([], [0, 1, 2, 3], 4) 1 [3, 7, 8, 9]";
+          return "([], [0], 1) 1 [23]";
       }
   }
   return "";
@@ -69,9 +68,6 @@ function get_inputs(transaction) {
     return inputs;
 }
 
-function run_coin_kernel_on_issue(issuetx) {
-    return Haste["runCoinKernelOnIssue"](issuetx);
-}
 
 function getHaste() {
     return Haste
@@ -80,8 +76,6 @@ function getHaste() {
 module.exports = {
     getHaste                 : getHaste,
     createTx                 : createTx,
-    run_coin_kernel_on_graph : run_coin_kernel_on_graph,
-    run_coin_kernel_on_issue : run_coin_kernel_on_issue,
     get_mux_shape            : get_mux_shape,
     get_payload              : get_payload,
     get_inputs               : get_inputs,
