@@ -76,9 +76,9 @@ parseMuxShape s = case (reads s) of
   _ -> Nothing
      
 toyMuxCoinKernel :: WCSCoinKernel String cs -> WCSCoinKernel String cs
-toyMuxCoinKernel innerKernel = \str-> trace ("toymuxcoinkernel") $ case parseMuxShape str of
-  Just (muxShape, rest) -> trace ("muxhshape " ++ show muxShape) $ strictMux (innerKernel rest) muxShape
-  Nothing -> trace ("not mux shape") $ const []
+toyMuxCoinKernel innerKernel = \str-> case parseMuxShape str of
+  Just (muxShape, rest) -> strictMux (innerKernel rest) muxShape
+  Nothing -> const []
  
  
 parseId :: String -> Maybe (Int, String)
@@ -93,11 +93,17 @@ toyDispatchCoinKernel table str = case parseId str of
     Nothing -> const []
   Nothing -> const []
                                        
-trivialCoinKernel :: String -> [Integer] -> [Integer]
-trivialCoinKernel op in_values = let out_values :: [Integer]
-                                     out_values = read op
-                                 in if (sum in_values) == (sum out_values) 
+transferCK :: String -> [Integer] -> [Integer]
+transferCK op in_values =  let out_values :: [Integer]
+                               out_values = read op
+                           in if (sum in_values) == (sum out_values) 
                                     then out_values
                                     else []                            
 
-
+issueCK :: String -> [Integer] -> [Integer]
+issueCK op in_values = if null in_values
+                          then out_values
+                          else []
+                       where
+                         out_values :: [Integer]
+                         out_values = read op

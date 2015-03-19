@@ -3,10 +3,12 @@ import Haste.Foreign
 import Haste
 import Haste.Prim 
 import Haste.JSON as J
-import Haste.Parsing
-import Haste.Serialize
+--import Haste.Parsing
+--import Haste.Serialize
 import Data.Either
 import Control.Applicative
+import System.Random as SR
+
 
 import qualified Data.Map as Map
 
@@ -17,72 +19,40 @@ import TransactionGraph
 
 instance Pack JSON
 instance Unpack JSON
+instance Pack Integer
+instance Unpack Integer
+instance Pack (WrappedCS Integer)
+instance Unpack (WrappedCS Integer)
 
 
-instance Pack (Tx String)
-instance Unpack (Tx String)
+pick :: [a] -> a
+pick xs = (xs !!) $  fst $ Haste.randomR (0, length xs - 1) (mkSeed 5)
 
-txInputs       = toJSStr "txInputs"
-txPayload      = toJSStr "txPayload"
-txID           = toJSStr "txID"
-txOutputCount  = toJSStr "txOutputCount"
-hashHex        = toJSStr "hashHex"
-index          = toJSStr "index"
-
-
-{-
-instance Serialize (Tx String) where
-  toJSON (Tx a b c d) = toJSON $ toJSStr "test"
-
-  parseJSON j =
-    Tx <$>
-        j .: txPayload
-    <*> j .: txInputs
-    <*> j .: txOutputCount
-    <*> j .: txID
--}
-
-
-coinstateMap = Map.fromList [(("2", 1), JustCS 1), (("3", 6), NullCS)]
 
 apply' = (applyTx (toyMuxCoinKernel
-           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))))
+           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
+                                                 (1, (strictCoinKernel issueCK))    ]))))
 
 kernel = toyMuxCoinKernel
-           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel trivialCoinKernel))]))
+           (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
+                                                 (1, (strictCoinKernel issueCK))    ]))
 
 packToString m = Prelude.foldr f [] $ Map.toList m
   where f x acc = (: acc) $ 
-                  "{" ++ "\"hashHex\""    ++ ":" ++ "\"" ++ a ++ "\"" ++ "," ++
+                  "{" ++ "\"txID\""       ++ ":" ++ "\"" ++ a ++ "\"" ++ "," ++
                          "\"index\""      ++ ":" ++ b ++ "," ++
-                         "\"coinState\""  ++ ":" ++ c ++ "}"              
+                         "\"coinState\""  ++ ":" ++ "\"" ++ c ++ "\"" ++ "}"              
                   where 
                         a = fst $ fst x
                         b = show . snd $ fst x
                         c = show $ snd x 
- 
-jsonToStr :: JSON -> JSString -> String
-jsonToStr j s = fromJSStr . encodeJSON $ (J.!) j s
-{--
-parseToTx :: JSON -> Tx String
-parseToTx json = trace ("payload = " ++ show c) $ Tx a b c d
-  where 
-        a  = tail . init $ jsonToStr json txPayload
-        b  = getInputs (json J.! txInputs) 0 []
-        c  = jsonToStr json txID
-        d  = (\x -> read x :: Int) $ jsonToStr json txOutputCount
---}
 
-getInputs :: JSON -> Int -> [CoinId] -> [CoinId]
-getInputs j c acc = 
-    case j J.~> toJSStr (show c) of
-      Just x -> getInputs j (c + 1) $ (: acc)
-                (jsonToStr x hashHex, (\x -> read x :: Int) $ jsonToStr x index)
-      _      -> acc
-
-
-runCoinKernelOnGraph :: [(String, [(String, Int)], String, Int)] -> IO [String]
-runCoinKernelOnGraph xs = return . packToString $ foldTxGraph (topologicalSort g g) apply'
+--runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [String]
+runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [(CoinId, Int)]
+runCoinKernelOnGraph xs = return $ map (\(a, b) -> case b of
+                                           JustCS x  -> (a, read (show x) :: Int)
+                                           _         -> (a, 0)) $
+                          Map.toList $ foldTxGraph g apply'
   where g = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
                         
 getMuxShape :: String -> IO String
@@ -90,14 +60,56 @@ getMuxShape payload = return $ ms
   where ms = case parseMuxShape payload of
           Just x -> show $ fst x
           _      -> "Nothing"
+{--
+runCoinKernel :: (String, [(CoinId, Integer)]) -> IO [String]
+runCoinKernel (x, xs) = return $ "":[] -- $ map (\x -> (show $ fst x) ++ (show $ snd x)) $  (coins 10 xs)
+  where coins count unspent | count == 0  = unspent
+                            | otherwise   = coins (count - 1) (Map.toList
+                                                           (foldTxGraph g apply') ++ unspent')
+                                            where (g, unspent') = getRandomGraph unspent
 
-test :: [(String, [(String, Int)], String, Int)] -> IO JSString
-test transactions = return $ toJSStr $ payload $ head tx
-    where tx = map (\(a, b, c, d) -> Tx a b c d) transactions
+
+
+
+runCoinKernel :: (String, [(CoinId, Integer)]) -> IO [(CoinId, Integer)]
+runCoinKernel (issueTxID, unspent) = do
+  (u, g) <- getRandomGraph unspent
+  return $ foldTxGraph g apply' ++ u
+  
+  
+
+getRandomGraph u = do
+  ri <- getRandomNum 3
+  
+
+
+
+ -}
+
+
+--TODO: Random coins pick. Create transactions with random payload. Run coinKernel and save result to unspent.
+--getGraph xs   =  (Tx (getPayload p) (inputs : []) "9" 1) : []
+--  where
+--                     p      = pick xs
+--                     inputs = fst $ p
+--                     
+--getPayload xs =  "([], [0], 1) 1 " ++ (show $ (snd xs) : [])
+
+getRandomNum :: Int -> IO [Int]
+getRandomNum n = getRand n []
+  where getRand counter acc
+              | counter == 0     = return acc
+              | otherwise        = do
+                     g <- SR.newStdGen
+                     let t = head $ SR.randomRs (0, n) g
+                     --print t
+                     getRand (counter - 1) $ t  : acc
+
 
 
 
 main = do
   export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
+--  export (toJSStr "runCoinKernel") runCoinKernel
   export (toJSStr "getMuxShape") getMuxShape
-  export (toJSStr "test") test
+  export (toJSStr "getRandomNum") getRandomNum
