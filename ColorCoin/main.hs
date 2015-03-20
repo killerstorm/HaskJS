@@ -54,6 +54,13 @@ runCoinKernelOnGraph xs = return $ map (\(a, b) -> case b of
                                            _         -> (a, 0)) $
                           Map.toList $ foldTxGraph g apply'
   where g = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
+
+
+runKernel :: (String, [(CoinId, Integer)], TxId) -> IO [(CoinId, Int)]
+runKernel (payload, inputs, txid) = return coins
+  where outputs      = kernel payload $ map (JustCS . snd) inputs
+        coins        = zip (zip (repeat txid) [0..]) $ map (\(JustCS x) -> read (show x) :: Int) outputs
+                       
                         
 getMuxShape :: String -> IO String
 getMuxShape payload = return $ ms
@@ -65,5 +72,5 @@ getMuxShape payload = return $ ms
 
 main = do
   export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
---  export (toJSStr "runCoinKernel") runCoinKernel
+  export (toJSStr "runKernel") runKernel
   export (toJSStr "getMuxShape") getMuxShape
