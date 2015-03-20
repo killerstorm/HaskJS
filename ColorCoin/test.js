@@ -2,28 +2,123 @@ var ckernel = require ('./main.js');
 const bc = require('bitcoinjs-lib');
 const bt = require('buffertools');
 var Transaction = bc.Transaction;
+var crypto = require('crypto');
 var _ = require('underscore');
-
 
 var h = ckernel.getHaste()
 
-var t = Transaction.fromHex('0100000001993a052baad64bccccb3c32f1603e95457949c33208052ba6893a1c8fc3bfadb000000006b483045022100d38cd30a2b34275b1f4054d56e7ab35a87cc0cd83e7ae4747e641fd696f4b764022076017c72dab2cef85016330d2a1798c5820955708adfcb23410caef92d3b58c40121022539abaecacca3e643bdadfd5f34f52e39fc1c5d6863536fb987d37999a55cdeffffffff0458020000000000001976a914cadeb078e53c27c75e3e1d9e6399ef90cafc456b88ac0000000000000000096a074f410100010900104e3800000000001976a9148e9c9a0187f0da5c69f4d7d35cf40e862e14653a88ac28180600000000001976a914cadeb078e53c27c75e3e1d9e6399ef90cafc456b88ac00000000');
+
+function maybe_get_op_return(script) {
+    if (script.chunks.length == 2 && script.chunks[0] == 106) {
+         return script.chunks[1];
+    } else { return null; }
+}
+
+function get_payload(transaction) {
+  for (var i = 0; i < transaction.outs.length; i++) {
+      var op_return = maybe_get_op_return(transaction.outs[i].script);
+      if (op_return) {
+          return op_return.toString();
+      }
+  }
+  return "";
+}
+
+
+function get_inputs(transaction) {
+    var inputs = [];
+    for (var i = 0; i < transaction.ins.length; i++) {
+        var temp = [];
+        temp[0] = (transaction.ins[i].hash.toString('hex'));
+        temp[1] = (transaction.ins[i].index);
+        inputs[i] = temp;
+    }
+    return inputs;
+}
+
+function createTx(t) {  //Tx for runCoinKernel
+    var tx = [];
+    tx.push(get_payload(t));
+    tx.push(get_inputs(t));
+    tx.push(t.getId());
+    tx.push(t.outs.length);
+
+    return tx;
+}
+
+
+function get_random_sums(n) {
+    var k = n < 3 ? n : Math.floor(Math.random() * 3 + 1);
+    var out_sums = [];
+    for (var i = 1; i < k; i++) {
+        var sum = Math.floor(Math.random() * (n / 2) + 1);
+        out_sums.push(sum);
+        n -= sum;
+    }
+    out_sums.push(n);
+    return out_sums;
+}
+           
+
+function create_tx(inputs, opid) {
+    var tx = new Transaction();
+    var amount = 0;
+
+    for (var i = 0; i < inputs.length; i++) {
+        tx.addInput(inputs[i][0][0], inputs[i][0][1]);
+        amount += inputs[i][1];
+    }
+
+    var outsums = get_random_sums(amount);
+    
+    for (var i = 0; i < outsums.length; i++) {
+        tx.addOutput(bc.scripts.pubKeyHashOutput(crypto.randomBytes(20)), outsums[i]);
+    }
+
+    var payload = '(' + JSON.stringify(_.range(inputs.length))  + ',' +
+        JSON.stringify(_.range(outsums.length)) + ',' +
+        outsums.length + ')' + opid.toString() + JSON.stringify(outsums);
+
+    tx.addOutput(bc.scripts.nullDataOutput(new Buffer(payload)), 0);
+    return tx;
+}
 
 
 
-var test_tx = ckernel.createTx(t);
+
+var unspent = [];
 
 
-var transactions = [];
-transactions.push(test_tx);
-
-var issue = create_issue_tx(t, 10);
-
-
-var coins = [];
+var test_payload = new Buffer("([], [0], 1) 1 [50]");
+var test_tx = new Transaction();
+test_tx.addOutput(bc.scripts.pubKeyHashOutput(crypto.randomBytes(20)), 0);
+test_tx.addOutput(bc.scripts.nullDataOutput(new Buffer(test_payload)), 0);
 
 
-console.log(JSON.stringify(h["runCoinKernelOnGraph"](transactions)));
+var tx = [];
+tx.push(createTx(test_tx));
+
+unspent = unspent.concat(h.runCoinKernelOnGraph(tx));
+//console.log(unspent);
+
+
+for (var i = 0; i < 10000; i++) {
+    var inputs = [];
+    var k = Math.floor(Math.random() * (unspent.length < 3 ? unspent.length : 3) + 1);
+    for (var j = 0; j < k ; j++) {
+        inputs = inputs.concat(unspent.splice(Math.floor(Math.random() * unspent.length), 1));
+    }
+    if (!inputs.length)
+        continue;
+    var tx = create_tx(inputs, 0);
+    var _tx = [];
+    _tx.push(get_payload(tx));
+    _tx.push(inputs);
+    _tx.push(tx.getId());
+    unspent = unspent.concat(h.runKernel(_tx));
+}
+
+console.log(unspent);
 
 
     
