@@ -29,7 +29,7 @@ function get_inputs(transaction) {
     var inputs = [];
     for (var i = 0; i < transaction.ins.length; i++) {
         var temp = [];
-        temp[0] = (transaction.ins[i].hash.toString('hex'));
+        temp[0] = (bt.reverse(transaction.ins[i].hash).toString('hex'));
         temp[1] = (transaction.ins[i].index);
         inputs[i] = temp;
     }
@@ -41,7 +41,7 @@ function createTx(t) {  //Tx for runCoinKernel
     tx.push(get_payload(t));
     tx.push(get_inputs(t));
     tx.push(t.getId());
-    tx.push(t.outs.length);
+    tx.push(t.outs.length - 1);
 
     return tx;
 }
@@ -75,9 +75,9 @@ function create_tx(inputs, opid) {
         tx.addOutput(bc.scripts.pubKeyHashOutput(crypto.randomBytes(20)), outsums[i]);
     }
 
-    var payload = '(' + JSON.stringify(_.range(inputs.length))  + ',' +
-        JSON.stringify(_.range(outsums.length)) + ',' +
-        outsums.length + ')' + opid.toString() + JSON.stringify(outsums);
+    var payload = '(' + JSON.stringify(_.range(inputs.length))  + ', ' +
+        JSON.stringify(_.range(outsums.length)) + ', ' +
+        outsums.length + ') ' + opid.toString() + ' ' + JSON.stringify(outsums);
 
     tx.addOutput(bc.scripts.nullDataOutput(new Buffer(payload)), 0);
     return tx;
@@ -89,7 +89,7 @@ function create_tx(inputs, opid) {
 var unspent = [];
 
 
-var test_payload = new Buffer("([], [0], 1) 1 [50]");
+var test_payload = new Buffer("([], [0], 1) 1 [500]");
 var test_tx = new Transaction();
 test_tx.addOutput(bc.scripts.pubKeyHashOutput(crypto.randomBytes(20)), 0);
 test_tx.addOutput(bc.scripts.nullDataOutput(new Buffer(test_payload)), 0);
@@ -101,24 +101,45 @@ tx.push(createTx(test_tx));
 unspent = unspent.concat(h.runCoinKernelOnGraph(tx));
 //console.log(unspent);
 
+var transactions = [];
+var tx_graph = [];
+var coins = [];
+tx_graph.push(createTx(test_tx));
 
-for (var i = 0; i < 10000; i++) {
+for (var i = 0; i < parseInt(process.argv[2]); i++) { 
     var inputs = [];
     var k = Math.floor(Math.random() * (unspent.length < 3 ? unspent.length : 3) + 1);
     for (var j = 0; j < k ; j++) {
-        inputs = inputs.concat(unspent.splice(Math.floor(Math.random() * unspent.length), 1));
+        inputs = _.union(inputs, unspent.splice(Math.floor(Math.random() * unspent.length), 1));
+        //inputs = inputs.concat(unspent.splice(Math.floor(Math.random() * unspent.length), 1));
     }
+
     if (!inputs.length)
         continue;
     var tx = create_tx(inputs, 0);
+
+    var tr = createTx(tx);
+
     var _tx = [];
     _tx.push(get_payload(tx));
     _tx.push(inputs);
     _tx.push(tx.getId());
-    unspent = unspent.concat(h.runKernel(_tx));
+    var temp =  h.runKernel(_tx);
+    unspent = _.union(unspent, temp);
+    tx_graph.push(tr);
+ //   _.each(tx_graph, function(x){console.log(JSON.stringify(x));});
+    coins = coins.concat(temp);
+    coins = _.union(coins, inputs);
+    
+    //unspent = unspent.concat(h.runKernel(_tx));
 }
 
-console.log(unspent);
+
+//_.each(tx_graph, function(x){console.log(JSON.stringify(x));});
+
+var result = h.runCoinKernelOnGraph(tx_graph);
+console.log(result);
+//console.log(unspent);
 
 
     
