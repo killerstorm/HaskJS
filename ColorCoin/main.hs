@@ -53,9 +53,9 @@ runCoinKernelOnGraph xs = return $ map (\(a, b) -> case b of
                                            JustCS x  -> (a, read (show x) :: Int)
                                            _         -> (a, 0)) $
                           Map.toList $ foldTxGraph g apply'
-  where g = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
-
-
+  where g' = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
+        g  = reverse $ topologicalSort g' g' -- full sorted graph
+                 
 runKernel :: (String, [(CoinId, Integer)], TxId) -> IO [(CoinId, Int)]
 runKernel (payload, inputs, txid) = return coins
   where outputs      = kernel payload $ map (JustCS . snd) inputs
