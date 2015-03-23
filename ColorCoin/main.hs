@@ -3,8 +3,6 @@ import Haste.Foreign
 import Haste
 import Haste.Prim 
 import Haste.JSON as J
---import Haste.Parsing
---import Haste.Serialize
 import Data.Either
 import Control.Applicative
 import System.Random as SR
@@ -36,16 +34,6 @@ apply' = (applyTx (toyMuxCoinKernel
 kernel = toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
                                                  (1, (strictCoinKernel issueCK))    ]))
-
-packToString m = Prelude.foldr f [] $ Map.toList m
-  where f x acc = (: acc) $ 
-                  "{" ++ "\"txID\""       ++ ":" ++ "\"" ++ a ++ "\"" ++ "," ++
-                         "\"index\""      ++ ":" ++ b ++ "," ++
-                         "\"coinState\""  ++ ":" ++ "\"" ++ c ++ "\"" ++ "}"              
-                  where 
-                        a = fst $ fst x
-                        b = show . snd $ fst x
-                        c = show $ snd x 
 
 --runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [String]
 runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [(CoinId, Int)]
