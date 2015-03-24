@@ -29,9 +29,9 @@ function get_inputs(transaction) {
     var inputs = [];
     for (var i = 0; i < transaction.ins.length; i++) {
         var temp = [];
-        temp[0] = (bt.reverse(transaction.ins[i].hash).toString('hex'));
-        temp[1] = (transaction.ins[i].index);
-        inputs[i] = temp;
+        temp.push(bt.reverse(transaction.ins[i].hash).toString('hex'));
+        temp.push(transaction.ins[i].index);
+        inputs.push(temp);
     }
     return inputs;
 }
