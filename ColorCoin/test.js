@@ -1,102 +1,31 @@
-var ckernel = require ('./main.js');
+const ck = require ('./ckernel.js');
+const main = require('./main.js');
+
 const bc = require('bitcoinjs-lib');
 const bt = require('buffertools');
+const crypto = require('crypto');
+const _ = require('underscore');
+
+
 var Transaction = bc.Transaction;
-var crypto = require('crypto');
-var _ = require('underscore');
 
-var h = ckernel.getHaste()
-
-
-function maybe_get_op_return(script) {
-    if (script.chunks.length == 2 && script.chunks[0] == 106) {
-         return script.chunks[1];
-    } else { return null; }
-}
-
-function get_payload(transaction) {
-  for (var i = 0; i < transaction.outs.length; i++) {
-      var op_return = maybe_get_op_return(transaction.outs[i].script);
-      if (op_return) {
-          return op_return.toString();
-      }
-  }
-  return "";
-}
-
-
-function get_inputs(transaction) {
-    var inputs = [];
-    for (var i = 0; i < transaction.ins.length; i++) {
-        var temp = [];
-        temp.push(bt.reverse(transaction.ins[i].hash).toString('hex'));
-        temp.push(transaction.ins[i].index);
-        inputs.push(temp);
-    }
-    return inputs;
-}
-
-function createTx(t) {  //Tx for runCoinKernel
-    var tx = [];
-    tx.push(get_payload(t));
-    tx.push(get_inputs(t));
-    tx.push(t.getId());
-    tx.push(t.outs.length - 1);
-
-    return tx;
-}
-
-
-function get_random_sums(n) {
-    var k = n < 3 ? n : Math.floor(Math.random() * 3 + 1);
-    var out_sums = [];
-    for (var i = 1; i < k; i++) {
-        var sum = Math.floor(Math.random() * (n / 2) + 1);
-        out_sums.push(sum);
-        n -= sum;
-    }
-    out_sums.push(n);
-    return out_sums;
-}
-           
-
-function create_tx(inputs, opid) {
-    var tx = new Transaction();
-    var amount = 0;
-
-    for (var i = 0; i < inputs.length; i++) {
-        tx.addInput(inputs[i][0][0], inputs[i][0][1]);
-        amount += inputs[i][1];
-    }
-
-    var outsums = get_random_sums(amount);
-    
-    for (var i = 0; i < outsums.length; i++) {
-        tx.addOutput(bc.scripts.pubKeyHashOutput(crypto.randomBytes(20)), outsums[i]);
-    }
-
-    var payload = '(' + JSON.stringify(_.range(inputs.length))  + ', ' +
-        JSON.stringify(_.range(outsums.length)) + ', ' +
-        outsums.length + ') ' + opid.toString() + ' ' + JSON.stringify(outsums);
-
-    tx.addOutput(bc.scripts.nullDataOutput(new Buffer(payload)), 0);
-    return tx;
-}
+var h = main.getHaste();
 
 
 
+//transaction.ins.map(function (txin) { return [txin.hash.toString('hex'), txin.index]  })
 
 var unspent = [];
 
 
-var test_payload = new Buffer("([], [0], 1) 1 [500]");
+var test_payload = new Buffer("([], [0], 1) 1 [1000]");
 var test_tx = new Transaction();
 test_tx.addOutput(bc.scripts.pubKeyHashOutput(crypto.randomBytes(20)), 0);
 test_tx.addOutput(bc.scripts.nullDataOutput(new Buffer(test_payload)), 0);
 
 
 var tx = [];
-tx.push(createTx(test_tx));
+tx.push(ck.createTx(test_tx));
 
 unspent = unspent.concat(h.runCoinKernelOnGraph(tx));
 //console.log(unspent);
@@ -104,7 +33,9 @@ unspent = unspent.concat(h.runCoinKernelOnGraph(tx));
 var transactions = [];
 var tx_graph = [];
 var coins = [];
-tx_graph.push(createTx(test_tx));
+tx_graph.push(ck.createTx(test_tx));
+
+console.time("running coinKernel...");
 
 for (var i = 0; i < parseInt(process.argv[2]); i++) { 
     var inputs = [];
@@ -116,29 +47,44 @@ for (var i = 0; i < parseInt(process.argv[2]); i++) {
 
     if (!inputs.length)
         continue;
-    var tx = create_tx(inputs, 0);
+    var tx = ck.create_tx(inputs, 0);
 
-    var tr = createTx(tx);
+    var tr = ck.createTx(tx);
 
     var _tx = [];
-    _tx.push(get_payload(tx));
+    _tx.push(ck.get_payload(tx));
     _tx.push(inputs);
     _tx.push(tx.getId());
     var temp =  h.runKernel(_tx);
     unspent = _.union(unspent, temp);
     tx_graph.push(tr);
- //   _.each(tx_graph, function(x){console.log(JSON.stringify(x));});
-    coins = coins.concat(temp);
-    coins = _.union(coins, inputs);
+   //   _.each(tx_graph, function(x){console.log(JSON.stringify(x));});
+   // coins = coins.concat(temp);
+   // coins = _.union(coins, inputs);
     
     //unspent = unspent.concat(h.runKernel(_tx));
 }
 
+console.timeEnd("running coinKernel...");
 
+
+console.time("just sorting...");
+
+h.topSort(tx_graph);
+
+console.timeEnd("just sorting...");
+
+
+//console.log(tx_graph);
 //_.each(tx_graph, function(x){console.log(JSON.stringify(x));});
+console.time("running coinkernel on graph...");
 
 var result = h.runCoinKernelOnGraph(tx_graph);
-console.log(result);
+
+console.timeEnd("running coinkernel on graph...");
+
+
+//console.log(result);
 //console.log(unspent);
 
 
