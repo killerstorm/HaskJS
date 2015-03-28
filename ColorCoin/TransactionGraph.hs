@@ -6,7 +6,7 @@ import qualified Data.Map as Map
 import Debug.Trace
 
 
-topologicalSort :: [Tx a] -> [Tx a]-> [Tx a]                        
+topologicalSort :: (Show a) => [Tx a] -> [Tx a]-> [Tx a]                        
 topologicalSort g tx = tsort tx []        
   where tsort [] r           = r                  -- return sorted list
         tsort (x:xs) visited
@@ -34,5 +34,21 @@ foldTxGraph :: [a] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
 foldTxGraph g apply = foldl applyTx' Map.empty g 
   where applyTx' acc tx = apply tx acc
 
+--topologicalSort :: (Show a) => [Tx a] -> [Tx a]-> [Tx a]                        
+topologicalSort' g keys = tsort keys (Map.empty, [])       
+  where
+    tsort [] (visited, acc)        = (visited, acc)
+    tsort (x:xs) (visited, acc)
+          | Map.member x visited   = tsort xs (visited, acc)   -- Tx already visited
+          | otherwise          = tsort xs $ (Map.insert x' b visited', x'' ++ acc')
+                                   where
+                                     b@(ins, p, _) = lookup' x g
+                                     x' = if p == "" then "" else x
+                                     x'' = if p == "" then [] else [(x, b)]
+                                     (visited', acc') =  tsort k (visited, acc)
+                                     k = Prelude.map (\x -> fst x) ins
 
- 
+                                            
+lookup' k m = case Map.lookup k m of
+  Just x      -> x
+  Nothing     -> ([],"", 0)
