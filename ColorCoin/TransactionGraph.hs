@@ -31,21 +31,8 @@ notMissingCS MissingCS = False
 notMissingCS _         = True
 
 --foldTxGraph :: [a] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
-foldTxGraph g apply =
-  foldl applyTx' Map.empty g 
-  where applyTx' acc tx = apply tx acc
-
-
-
-applyTx'  kernel (txid, inputs, payload) csMap   =
-  Map.union csMap (Map.fromList validOutputCoins)
-  where ins                = map (\x -> case Map.lookup x csMap of
-                                     Nothing        -> MissingCS
-                                     Just x         -> x) inputs
-        outputs            = kernel payload ins
-        coinIds            = zip (repeat txid) [0..]
-        outputCoins        = zip coinIds outputs
-        validOutputCoins   = filter (notMissingCS . snd) outputCoins
+foldTxGraph g apply = foldl applyTx Map.empty g 
+  where applyTx acc tx = apply tx acc
 
 
 --topologicalSort' :: Map.Map k v -> [k] -> (Map.Map k v, [(k, v)])                        
