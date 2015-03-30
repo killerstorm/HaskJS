@@ -48,11 +48,6 @@ applyTx'  kernel (txid, inputs, payload) csMap   =
         validOutputCoins   = filter (notMissingCS . snd) outputCoins
 
 
---foldTxGraph' :: (Show a, Show b) => [(a, (b, a, c))] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
-foldTxGraph' g apply =
-  foldl applytx Map.empty g 
-  where applytx acc (a, (b, c, _)) = apply (a, b, c) acc
-
 --topologicalSort' :: Map.Map k v -> [k] -> (Map.Map k v, [(k, v)])                        
 topologicalSort' g k = tsort k (Map.empty, [])               -- g - transactions map, k - list of keys (txId list)  
   where
