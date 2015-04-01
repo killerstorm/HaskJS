@@ -31,9 +31,27 @@ notMissingCS MissingCS = False
 notMissingCS _         = True
 
 --foldTxGraph :: [a] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
-foldTxGraph g apply = foldl applyTx Map.empty g 
-  where applyTx acc tx = apply tx acc
+foldTxGraph g apply =
+  foldl applyTx' Map.empty g 
+  where applyTx' acc tx = apply tx acc
 
+
+
+applyTx'  kernel (txid, inputs, payload) csMap   =
+  Map.union csMap (Map.fromList validOutputCoins)
+  where ins                = map (\x -> case Map.lookup x csMap of
+                                     Nothing        -> MissingCS
+                                     Just x         -> x) inputs
+        outputs            = kernel payload ins
+        coinIds            = zip (repeat txid) [0..]
+        outputCoins        = zip coinIds outputs
+        validOutputCoins   = filter (notMissingCS . snd) outputCoins
+
+
+--foldTxGraph' :: (Show a, Show b) => [(a, (b, a, c))] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
+foldTxGraph' g apply =
+  foldl applytx Map.empty g 
+  where applytx acc (a, (b, c, _)) = apply (a, b, c) acc
 
 --topologicalSort' :: Map.Map k v -> [k] -> (Map.Map k v, [(k, v)])                        
 topologicalSort' g k = tsort k (Map.empty, [])               -- g - transactions map, k - list of keys (txId list)  
@@ -42,7 +60,7 @@ topologicalSort' g k = tsort k (Map.empty, [])               -- g - transactions
     tsort (x:xs) (visited, sorted)
           | Map.member x visited || Map.notMember x g        -- if x is visited or x not in graph
                                     = tsort xs (visited, sorted) 
-          | otherwise               = tsort xs $ (Map.insert x b visited', (x, b) : sorted') -- tsort rest of keylist, insert current tx in visited map and in sorted list
+          | otherwise               = tsort xs (Map.insert x b visited', (x, b) : sorted') -- tsort rest of keylist, insert current tx in visited map and in sorted list
                                    where
                                      b@(ins, _, _)       = g Map.! x
                                      k                   = map fst ins                -- inputs (txids) of current transaction                  
