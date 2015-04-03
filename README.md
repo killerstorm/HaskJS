@@ -1,1 +1,1 @@
-# HaskJS
+-- ColorCoin
