@@ -24,11 +24,6 @@ instance Unpack Integer
 instance Pack (WrappedCS Integer)
 instance Unpack (WrappedCS Integer)
 
-
-pick :: [a] -> a
-pick xs = (xs !!) $  fst $ Haste.randomR (0, length xs - 1) (mkSeed 5)
-
-
 apply' = (applyTx (toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
                                                  (1, (strictCoinKernel issueCK))    ]))))
