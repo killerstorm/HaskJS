@@ -16,16 +16,16 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     // var uncoloredNedeedSum;
 
     newTx = new Transaction();
-    neededSum = _.reduce(targets, function(sum, n) {return sum + n[1];});
-    inputSum  = _.reduce(unspentColoredCoins, function (sum, n) {return sum + n[1];});
+    neededSum = _.reduce(_.map(targets, snd), function(sum, n) {return sum + n;});
+    inputSum  = _.reduce(_.map(unspentColoredCoins, getCS), function (sum, n) {return sum + parseInt(n.cs);});
     outSums   = _.map(targets, function(x) {return x[1];});
     change = inputSum - neededSum;
 
     if (change > 0)
         newTx.addOutput(bc.scripts.pubKeyHashOutput(changeAddress), change);
 
-    _.each(_.map(unspentColoredCoins, getInput), function (_in) {
-        newTx.addInput(_in[0], _in[1])});
+    _.each(unspentColoredCoins, function (_in) {
+        newTx.addInput(_in.txid, parseInt(_in.index))});
 
     _.each(targets, function(x) {
         newTx.addOutput(bc.scripts.pubKeyHashOutput(x[0]), x[1]);
@@ -54,7 +54,13 @@ function getInput(coins) {
     return coins[0];
 }
 
-               
+function snd(x) {
+    return x[1];
+}
+
+function getCS(n) {
+    return parseInt(n.cs);
+}
 
 
 function range(n) {
