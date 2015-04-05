@@ -63,10 +63,10 @@ topSort xs = return $  map (\(Tx a b c d) -> (a, b, c, d)) g
         g  = reverse $ topologicalSort g' g' -- full sorted graph
 
              
-runKernel :: (String, [(CoinId, Integer)], TxId) -> IO [(CoinId, Int)]
-runKernel (payload, inputs, txid) = return coins
+runKernel :: (String, [(CoinId, Integer)], TxId) -> IO [JSString]
+runKernel (payload, inputs, txid) = return $ map packToJSON coins
   where outputs      = kernel payload $ map (JustCS . snd) inputs
-        coins        = zip (zip (repeat txid) [0..]) $ map (\(JustCS x) -> read (show x) :: Int) outputs
+        coins        = zip (zip (repeat txid) [0..]) outputs
                        
                         
 getMuxShape :: String -> IO String
