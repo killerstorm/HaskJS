@@ -22,10 +22,13 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     change = inputSum - neededSum;
 
     if (change > 0)
-        newTx.addOutput(bc.script.pubKeyHashOutput(new Buffer(changeAddress)), change);
+        newTx.addOutput(bc.scripts.pubKeyHashOutput(changeAddress), change);
+
+    _.each(_.map(unspentColoredCoins, getInput), function (_in) {
+        newTx.addInput(_in[0], _in[1])});
 
     _.each(targets, function(x) {
-        newTx.addOutput(bc.scripts.pubHashOutput(new Buffer(x[0])), x[1]);
+        newTx.addOutput(bc.scripts.pubKeyHashOutput(x[0]), x[1]);
     });
 
     payload = createPayload (unspentColoredCoins.length, targets.length, opid, outSums);
@@ -47,7 +50,11 @@ function createPayload (ins, outs, opid, outsums) {
         opid.toString() + ' ' + JSON.stringify(outsums);
 }
 
+function getInput(coins) {
+    return coins[0];
+}
 
+               
 
 
 function range(n) {
@@ -60,6 +67,8 @@ function range(n) {
 function sortTargetsByColor(targets) {
 }
 
-
+module.exports = {
+    composeColoredTx : composeColoredTx
+}
 
     
