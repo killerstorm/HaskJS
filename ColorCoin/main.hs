@@ -37,7 +37,7 @@ packToJSON :: (Show cs) => (CoinId, WrappedCS cs) -> JSString
 packToJSON ((txid, index), cs) = toJSStr $
   "{" ++
   "\"txid\" : \""  ++ txid       ++ "\", " ++
-  "\"index\" : \"" ++ show index ++ "\", " ++
+  "\"index\" : " ++ show index ++ ", " ++
   "\"cs\" : \""    ++ coinstate  ++ "\"}"
   where coinstate = case cs of
           JustCS x  -> show x
