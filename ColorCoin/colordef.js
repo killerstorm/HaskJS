@@ -25,7 +25,7 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
         newTx.addOutput(bc.scripts.pubKeyHashOutput(changeAddress), change);
 
     _.each(unspentColoredCoins, function (_in) {
-        newTx.addInput(_in.txid, parseInt(_in.index))});
+        newTx.addInput(_in.txid, _in.index)});
 
     _.each(targets, function(x) {
         newTx.addOutput(bc.scripts.pubKeyHashOutput(x[0]), x[1]);
