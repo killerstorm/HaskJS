@@ -10,28 +10,33 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     var change;
     var inputSum;
     var payload;
-    var outSums;
+    var outValues;
+    var inValues;
 
     // var sortedByColors = sortTargetsByColor(targets);
     // var uncoloredNedeedSum;
+    
+    newTx     = new Transaction();
+    inValues  = _.map(_.pluck(unspentColoredCoins, 'cs'), parseInt);
+    outValues = _.pluck(targets, 'value');
+    neededSum = _.sum(outValues);
+    inputSum  = _.sum(inValues);
+    change    = inputSum - neededSum;
+    
 
-    newTx = new Transaction();
-    neededSum = _.reduce(_.map(targets, snd), function(sum, n) {return sum + n;});
-    inputSum  = _.reduce(_.map(unspentColoredCoins, getCS), function (sum, n) {return sum + parseInt(n.cs);});
-    outSums   = _.map(targets, function(x) {return x[1];});
-    change = inputSum - neededSum;
-
-    if (change > 0)
-        newTx.addOutput(bc.scripts.pubKeyHashOutput(changeAddress), change);
+    if (change > 0) {
+        newTx.addOutput(bc.scripts.pubKeyHashOutput(changeAddress), 0);
+        outValues.push(change);
+    }
 
     _.each(unspentColoredCoins, function (_in) {
         newTx.addInput(_in.txid, _in.index)});
 
-    _.each(targets, function(x) {
-        newTx.addOutput(bc.scripts.pubKeyHashOutput(x[0]), x[1]);
+    _.each(targets, function(target) {
+        newTx.addOutput(bc.scripts.pubKeyHashOutput(target.address), 0);
     });
 
-    payload = createPayload (unspentColoredCoins.length, targets.length, opid, outSums);
+    payload = createPayload (unspentColoredCoins.length, targets.length, opid, outValues);
 
     newTx.addOutput(bc.scripts.nullDataOutput(new Buffer(payload)), 0);
     return newTx;
@@ -40,38 +45,20 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
 
 
 function composeBitcoinTx () {
+
+
+
+    
 }
 
 
 function createPayload (ins, outs, opid, outsums) {
-    return '(' + JSON.stringify(range(ins)) + ', ' +
-        JSON.stringify(range(outs)) + ', ' +
+    return '(' + JSON.stringify(_.range(ins)) + ', ' +
+        JSON.stringify(_.range(outs)) + ', ' +
         outs.toString() + ') ' +
         opid.toString() + ' ' + JSON.stringify(outsums);
 }
 
-function getInput(coins) {
-    return coins[0];
-}
-
-function snd(x) {
-    return x[1];
-}
-
-function getCS(n) {
-    return parseInt(n.cs);
-}
-
-
-function range(n) {
-    var r = [];
-    for (var i = 0; i < n; r.push(i), i++);
-    return r;
-}
-
-
-function sortTargetsByColor(targets) {
-}
 
 module.exports = {
     composeColoredTx : composeColoredTx
