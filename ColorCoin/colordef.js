@@ -11,16 +11,13 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     var inputSum;
     var payload;
     var outValues;
-    var inValues;
-
-    // var sortedByColors = sortTargetsByColor(targets);
-    // var uncoloredNedeedSum;
+    var coins;
     
     newTx     = new Transaction();
-    inValues  = _.map(_.pluck(unspentColoredCoins, 'cs'), parseInt);
     outValues = _.pluck(targets, 'value');
     neededSum = _.sum(outValues);
-    inputSum  = _.sum(inValues);
+    coins     = selectCoins(unspentColoredCoins, neededSum);
+    inputSum  = _.sum(coins);
     change    = inputSum - neededSum;
     
 
@@ -51,6 +48,20 @@ function composeBitcoinTx () {
     
 }
 
+
+function selectCoins (unspentCoins, neededSum) {
+    var totalsum = 0;
+    var unspent = [];
+    do {
+        if (parseInt(unspentCoins[0].cs) != NaN) {
+            unspent.push(unspentCoins[0]);
+            totalsum += parseInt(unspentCoins[0].cs);
+        }
+        unspentCoins.splice(0, 1);
+    } while (totalsum < neededSum);
+    return unspent;        
+}
+    
 
 function createPayload (ins, outs, opid, outsums) {
     return '(' + JSON.stringify(_.range(ins)) + ', ' +
