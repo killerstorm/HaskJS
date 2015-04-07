@@ -17,7 +17,7 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     outValues = _.pluck(targets, 'value');
     neededSum = _.sum(outValues);
     coins     = selectCoins(unspentColoredCoins, neededSum);
-    inputSum  = _.sum(coins);
+    inputSum  = _.sum(_.map(_.pluck(coins, 'cs'), parseInt));
     change    = inputSum - neededSum;
     
 
@@ -26,7 +26,7 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
         outValues.push(change);
     }
 
-    _.each(unspentColoredCoins, function (_in) {
+    _.each(coins, function (_in) {
         newTx.addInput(_in.txid, _in.index)});
 
     _.each(targets, function(target) {
@@ -50,15 +50,17 @@ function composeBitcoinTx () {
 
 
 function selectCoins (unspentCoins, neededSum) {
-    var totalsum = 0;
-    var unspent = [];
-    do {
-        if (parseInt(unspentCoins[0].cs) != NaN) {
-            unspent.push(unspentCoins[0]);
-            totalsum += parseInt(unspentCoins[0].cs);
-        }
-        unspentCoins.splice(0, 1);
-    } while (totalsum < neededSum);
+    var total = 0;
+    var unspent = _.takeWhile(unspentCoins, function(n) {
+        var value = parseInt(n.cs) == NaN ? 0 : parseInt(n.cs);
+        return total >= neededSum ? false : (total += value) && true;
+    });
+
+    if (total < neededSum)
+        throw new Error ("Not enough coins!");
+
+    unspentCoins = _.difference(unspentCoins, unspent);
+    unspent = _.filter(unspent, function(n) {return parseInt(n.cs) != NaN;});
     return unspent;        
 }
     
