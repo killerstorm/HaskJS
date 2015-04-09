@@ -12,7 +12,9 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     var payload;
     var outValues;
     var coins;
-    
+    var dustThreshold;
+
+    dustThreshold = 
     newTx     = new Transaction();
     outValues = _.pluck(targets, 'value');
     neededSum = _.sum(outValues);
@@ -41,8 +43,9 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
 
 
 
-function composeBitcoinTx () {
-
+function composeBitcoinTx (tx) {
+    var uncoloredNeeded;
+    //TODO: implement this function
 
 
     
