@@ -3,6 +3,8 @@ const bc          = require('bitcoinjs-lib');
 const _           = require('lodash');
 const Transaction = bc.Transaction;
 
+const dustThreshold = 1000;
+
 
 function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     var newTx;
@@ -12,10 +14,9 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     var payload;
     var outValues;
     var coins;
-    var dustThreshold;
 
-    dustThreshold = 
     newTx     = new Transaction();
+    
     outValues = _.pluck(targets, 'value');
     neededSum = _.sum(outValues);
     coins     = selectCoins(unspentColoredCoins, neededSum);
@@ -29,7 +30,8 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     }
 
     _.each(coins, function (_in) {
-        newTx.addInput(_in.txid, _in.index)});
+        newTx.addInput(_in.txid, _in.index);
+    });
 
     _.each(targets, function(target) {
         newTx.addOutput(bc.scripts.pubKeyHashOutput(target.address), 0);
@@ -38,14 +40,18 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     payload = createPayload (unspentColoredCoins.length, targets.length, opid, outValues);
 
     newTx.addOutput(bc.scripts.nullDataOutput(new Buffer(payload)), 0);
+
     return newTx;
 }
 
 
 
-function composeBitcoinTx (tx) {
+function composeBitcoinTx (coloredTx, inputCoins, targets, unspentUncoloredCoins, allCoins) {
     var uncoloredNeeded;
-    //TODO: implement this function
+    
+
+
+
 
 
     
