@@ -1,7 +1,6 @@
-const tx          = require('./tx.js');
-const bc          = require('bitcoinjs-lib');
+const bitcoin     = require('bitcoinjs-lib');
 const _           = require('lodash');
-const Transaction = bc.Transaction;
+const Transaction = bitcoin.Transaction;
 
 const dustThreshold = 1000;
 
@@ -15,8 +14,7 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     var outValues;
     var coins;
 
-    newTx     = new Transaction();
-    
+    newTx     = new Transaction();    
     outValues = _.pluck(targets, 'value');
     neededSum = _.sum(outValues);
     coins     = selectCoins(unspentColoredCoins, neededSum);
@@ -25,7 +23,7 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     
 
     if (change > 0) {
-        newTx.addOutput(bc.scripts.pubKeyHashOutput(changeAddress), 0);
+        newTx.addOutput(bitcoin.scripts.pubKeyHashOutput(changeAddress), 0);
         outValues.push(change);
     }
 
@@ -34,29 +32,23 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     });
 
     _.each(targets, function(target) {
-        newTx.addOutput(bc.scripts.pubKeyHashOutput(target.address), 0);
+        newTx.addOutput(bitcoin.scripts.pubKeyHashOutput(target.address), 0);
     });
 
     payload = createPayload (unspentColoredCoins.length, targets.length, opid, outValues);
 
-    newTx.addOutput(bc.scripts.nullDataOutput(new Buffer(payload)), 0);
+    newTx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0);
 
     return newTx;
 }
 
 
 
-function composeBitcoinTx (coloredTx, inputCoins, targets, unspentUncoloredCoins, allCoins) {
+function composeBitcoinTx (coloredTx, targets, unspentUncoloredCoins, allUnspentCoins, inputColoredCoins, ) {
     var uncoloredNeeded;
-    
-
-
-
-
-
+   
     
 }
-
 
 function selectCoins (unspentCoins, neededSum) {
     var total = 0;
@@ -84,6 +76,7 @@ function createPayload (ins, outs, opid, outsums) {
 
 module.exports = {
     composeColoredTx : composeColoredTx
+    composeBitconTx  : composeBitcoinTx
 }
 
     
