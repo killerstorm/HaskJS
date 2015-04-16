@@ -5,7 +5,7 @@ const Transaction = bitcoin.Transaction;
 const dustThreshold = 1000;
 
 
-function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
+function composeColoredTx (unspentCoins, targets, changeAddress, opid) {
     var newTx;
     var neededSum;
     var change;
@@ -17,7 +17,7 @@ function composeColoredTx (unspentColoredCoins, targets, changeAddress, opid) {
     newTx     = new Transaction();    
     outValues = _.pluck(targets, 'value');
     neededSum = _.sum(outValues);
-    coins     = selectCoins(unspentColoredCoins, neededSum);
+    coins     = unspentCoins.selectColored(neededSum);
     inputSum  = _.sum(_.map(_.pluck(coins, 'cs'), parseInt));
     change    = inputSum - neededSum;
     
