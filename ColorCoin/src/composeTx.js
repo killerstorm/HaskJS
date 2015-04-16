@@ -49,23 +49,7 @@ function composeBitcoinTx (coloredTx, targets, unspentUncoloredCoins, allUnspent
    
     
 }
-
-function selectCoins (unspentCoins, neededSum) {
-    var total = 0;
-    var unspent = _.takeWhile(unspentCoins, function(n) {
-        var value = parseInt(n.cs) == NaN ? 0 : parseInt(n.cs);
-        return total >= neededSum ? false : (total += value) && true;
-    });
-
-    if (total < neededSum)
-        throw new Error ("Not enough coins!");
-
-    unspentCoins = _.difference(unspentCoins, unspent);
-    unspent = _.filter(unspent, function(n) {return parseInt(n.cs) != NaN;});
-    return unspent;        
-}
     
-
 function createPayload (ins, outs, opid, outsums) {
     return '(' + JSON.stringify(_.range(ins)) + ', ' +
         JSON.stringify(_.range(outs)) + ', ' +
