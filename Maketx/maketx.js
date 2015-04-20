@@ -2,37 +2,39 @@
 
 var fs = require('fs');
 var compose = require('./composeTx');
-//var Getopt = require('node-getopt');
+var co = require('./checkOptions');
+var Getopt = require('node-getopt');
 
-var opt = require('node-getopt').create([
+
+var opt = new Getopt([
     ['s' , 'send'                , 'make send tx.'],
     ['i' , 'issue'               , 'make issue tx.'],
     ['f' , 'input_file=ARG'      , 'load file'],
     ['o' , 'output_file=ARG'     , 'output file'],
     ['h' , 'help'                , 'display this help']
-])
-.bindHelp()
-.parseSystem();
+]).bindHelp();
 
-var options = opt.options;
-
-if (!((options.send || options.issue) && !(options.send && options.issue))) {
-    throw new Error ('One operational option must be specified');
-}
-
-if (!options.input_file) {
-    throw new Error ('Input file not specified!');
-}
-
-if (!fs.existsSync(options.input_file)) {
-    throw new Error ('File does not exist.');
+var options = opt.parseSystem().options;
+if (co.checkOptions(options)) {
+    opt.showHelp();
+    return;
 }
 
 var json = JSON.parse(fs.readFileSync(options.input_file));
-var coloredTx;
-var bitoinTx;
+var TX;
 
 if (options.send)
-    coloredTx = composeColoredSendTx (json.unspentColoredCoins, json.coloredTargets, json.coloredChangeAddress);
+    TX = compose.composeColoredSendTx (json.unspentColoredCoins, json.coloredTargets, json.coloredChangeAddress);
 else
-    coloredTx = composeColoredIssueTx (json.issueValue);
+    TX = compose.composeColoredIssueTx (json.issueValue);
+
+TX = compose.composeBitcoinTx(TX, json.context, json.UnspentCoins); 
+
+TX = signTx(TX).toHex();
+
+fs.writeFile(options.output_file, TX);
+    
+
+function signTx (tx) {
+    throw new Error ('not implemented');
+}
