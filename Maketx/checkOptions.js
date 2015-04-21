@@ -28,11 +28,11 @@ function checkOptions(options) {
         answer = readline.question("File " +
                                    "\"" + options.output_file + "\"" +
                                    " already exists. Overwrite? (y / n)...");
-        if (answer == 'y') {
+        if (answer == 'n') {
             fname = readline.question("Enter filename: ");
             options.output_file = fname;
         }
-        else if (answer == 'n')
+        else if (answer == 'y')
             break;
     }    
 
