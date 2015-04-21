@@ -35,9 +35,9 @@ function composeColoredSendTx (unspentCoins, targets, changeAddress) {
     }
  
     targets = _.clone(targets);
-    var outValues =  _.ma(targets, coinValueFn);
+    var outValues =  _.map(targets, coinValueFn);
     var neededSum = _.sum(outValues);
-    var coins     = selectCoins(unspentCoins, coinValueFn, needeedSum);
+    var coins     = selectCoins(unspentCoins, coinValueFn, neededSum);
     var inputSum  = _.sum(_.map(coins, coinValueFn));
     var change    = inputSum - neededSum;   
  
@@ -87,7 +87,7 @@ function composeBitcoinTx (coloredTx, context, unspentCoins) {
  
     if (change > 0) {
         tx.addOutput(bictoin.scripts.pubKeyHashOutput(
-            new Buffer (changeAddress)), change);
+            new Buffer (context.changeAddress)), change);
     }
  
     tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(coloredTx.payload)), 0);
@@ -95,3 +95,8 @@ function composeBitcoinTx (coloredTx, context, unspentCoins) {
     return tx;  
 }
 
+module.exports = {
+    composeColoredSendTx  : composeColoredSendTx,
+    composeBitcoinTx      : composeBitcoinTx,
+    composeColoredIssueTx : composeColoredIssueTx
+}

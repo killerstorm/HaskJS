@@ -24,11 +24,11 @@ var json = JSON.parse(fs.readFileSync(options.input_file));
 var TX;
 
 if (options.send)
-    TX = compose.composeColoredSendTx (...);
+    TX = compose.composeColoredSendTx (json.unspentCoins, json.targets, json.coloredChangeAddress);
 else
     TX = compose.composeColoredIssueTx (...);
 
-TX = compose.composeBitcoinTx(TX, ...); 
+TX = compose.composeBitcoinTx(TX, json.context, json.unspentCoins); 
 
 TX = signTx(TX).toHex();
 
