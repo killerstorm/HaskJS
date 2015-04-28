@@ -26,7 +26,7 @@ var TX;
 if (options.send)
     TX = compose.composeColoredSendTx (json.unspentCoins, json.targets, json.coloredChangeAddress);
 else
-    TX = compose.composeColoredIssueTx (...);
+    TX = compose.composeColoredIssueTx (json.issueValue, json.targets);
 
 TX = compose.composeBitcoinTx(TX, json.context, json.unspentCoins); 
 

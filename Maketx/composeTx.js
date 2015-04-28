@@ -49,9 +49,9 @@ function composeColoredSendTx (unspentCoins, targets, changeAddress) {
     return {inputs: coins, targets: targets, payload: payload};
 }
  
-function composeColoredIssueTx (value) {
+function composeColoredIssueTx (value, targets) {
   var payload = createPayload([], [0], 1, [value]);
-  return {inputs: [], targets: [], payload: payload};
+  return {inputs: [], targets: targets, payload: payload};
 }
  
  
