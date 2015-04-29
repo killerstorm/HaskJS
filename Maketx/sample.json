@@ -1,0 +1,9 @@
+{
+    "unspentCoins" : ,
+    "targets" : ,
+    "issueValue" : ,
+    "coloredChangeAddress" : ,
+    "context" : {
+        "dustThreshold" : ,
+        "changeAddress" : }
+}
