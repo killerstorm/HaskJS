@@ -53,7 +53,6 @@ function composeColoredIssueTx (value, targets) {
   return {inputs: [], targets: targets, payload: payload};
 }
  
- 
 function composeBitcoinTx (coloredTx, context, unspentCoins) {
     var tx = new Transaction();
  
