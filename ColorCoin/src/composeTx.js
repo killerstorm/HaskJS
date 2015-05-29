@@ -1,123 +1,101 @@
-const bitcoin     = require('bitcoinjs-lib');
 const _           = require('lodash');
-const Transaction = bitcoin.Transaction;
+const bitcoin     = require('bitcoinjs-lib');
 const buffertools = require('buffertools');
+const Transaction = bitcoin.Transaction;
 
-const dustThreshold = 5460;
-
-
-function composeColoredTx (unspentCoins, targets, changeAddress, colorId) {
-    var neededSum;
-    var change;
-    var inputSum;
-    var coins;
-    
-    neededSum = _.sum(_.pluck(targets, 'value'));
-    coins     = selectCoins(unspentCoins, needeedSum);
-    inputSum  = _.sum(_.map(_.pluck(coins, 'cs'), parseInt));
-    change    = inputSum - neededSum;   
-
-    if (change) {
-        targets.push({address: changeAddress, value: change});
-    }
-
-    return {inputs: coins, targets: targets};
+function createPayload (ins, outs, opid, outValues) {
+    return '(' + JSON.stringify(_.range(ins)) + ', ' +
+        JSON.stringify(_.range(outs)) + ', ' +
+        outs.toString() + ') ' +
+        opid.toString() + ' ' + JSON.stringify(outValues);
 }
-
-
-
-function composeBitcoinTx (coloredTx, targets, changeAddress, unspentCoins, opid = 0) {
-    var tx;
-    var uncoloredNeeded;
-    var uncoloredSum;
-    var change;
-    var coloredTargets;
-    var coloredInputs;
-    var outValues;
-    var payload;
-    var fee;
-
-    tx = new Transaction();
-
-    coloredTargets = coloredTx.targets;
-    coloredInputs  = coloredTx.inputs;
-    uncoloredNeeded   = _.sum(_.pluck(targets, 'value'));
-    outValues = [];
-
-
-    _.each(coloredTargets.append(uncoloredTargets), function(target) {
-        var value = target.value;
-        if (target.value < dustThreshold) {
-            value = dustThreshold;
-            uncoloredNeeded += (dustThreshold - target.value);
-        }
-        tx.addOutput(bictoin.scripts.pubKeyHashOutput(
-            new Buffer (target.address)), value);
-        outValues.push(value);
-    });
-
-
-    uncoloredInputs     = selectCoins(unspentCoins, uncoloredNeeded);
-    uncoloredSum        = _.sum(_.map(_.pluck(uncoloredInputs, 'cs'), parseInt));
-    
-    _.each(coloredInputs.append(uncoloredInputs), function(coin) {
-        tx.addInput(coin.txid, coin.index);
-    });
-
-    fee = estimateFee (tx);
-
-    change = uncoloredSum - fee - uncoloredNeeded;
-
-    if (change) {
-        tx.addOutput(bictoin.scripts.pubKeyHashOutput(
-            new Buffer (changeAddress)), change);
-        outValues.push(change); 
+ 
+function selectCoins (unspentCoins, coinValueFn, neededSum) {
+    var total = 0;
+    var selected = [];
+    for (var i = 0; i < unspentCoins.length; ++i) {
+        var coinValue = coinValueFn(unspentCoins[i]);
+        if (coinValue > 0) {
+            total += coinValue;
+            selected.push(unspentCoins[i]);
+            if (total >= neededSum) break;
+        }      
     }
-
-    payload = createPayload(coloredInputs.length + uncoloredInputs.length, coloredTargets.length + uncoloredTargts.length, opid, outValues);
-
-    tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0);
+    
+    if (total < neededSum)
+        throw new Error ("Not enough coins!");
+ 
+    return selected;
+}
+   
+function composeColoredSendTx (unspentCoins, targets, changeAddress) {
+    function coinValueFn (coin) {
+        return coin.cv;
+    }
+ 
+    targets = _.clone(targets);
+    var outValues =  _.map(targets, coinValueFn);
+    var neededSum = _.sum(outValues);
+    var coins     = selectCoins(unspentCoins, coinValueFn, neededSum);
+    var inputSum  = _.sum(_.map(coins, coinValueFn));
+    var change    = inputSum - neededSum;   
+ 
+    if (change) {
+        targets.push({address: changeAddress, cv: change.toString()});
+        outValues.push(change);
+    }
+    var payload = createPayload(coins, targets, 0, outValues);
+    return {inputs: coins, targets: targets, payload: payload};
+}
+ 
+function composeColoredIssueTx (value, targets) {
+  var payload = createPayload([], [0], 1, [value]);
+  return {inputs: [], targets: targets, payload: payload};
+}
+ 
+ 
+function composeBitcoinTx (coloredTx, context, unspentCoins) {
+    var tx = new Transaction();
+ 
+    unspentCoins = _.reject(unspentCoins, 'cv')
+ 
+    var coloredTargets = coloredTx.targets;
+    var coloredInputs  = coloredTx.inputs;
+    var fee = 10000;
+    var uncoloredNeeded   = coloredTargets.length * context.dustThreshold + fee;
+ 
+    _.each(coloredTargets, function(target) {
+        tx.addOutput(bictoin.scripts.pubKeyHashOutput(
+            new Buffer (target.address)), context.dustThreshold);
+    });
+ 
+    _.each(coloredInputs, function(coin) {
+        tx.addInput(coin.txid, coin.index);
+        uncoloredNeeded -= coin.value;
+    });
+ 
+    var uncoloredSum = 0;
+    if (uncoloredNeeded > 0) {
+      var uncoloredInputs = selectCoins(unspentCoins, function (coin) { return coin.value }, 
+                                        uncoloredNeeded);
+      uncoloredSum        = _.sum(_.pluck(uncoloredInputs, 'value'));
+      _.each(uncoloredInputs, function(coin) {  tx.addInput(coin.txid, coin.index); });
+    }
+ 
+    var change = uncoloredSum - uncoloredNeeded;
+ 
+    if (change > 0) {
+        tx.addOutput(bictoin.scripts.pubKeyHashOutput(
+            new Buffer (context.changeAddress)), change);
+    }
+ 
+    tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(coloredTx.payload)), 0);
   
     return tx;  
 }
 
-function composeTx() {
-    throw new Error ("composeTx not implemented!");
-}
-
-
-function estimateFee() {
-    throw new Error ("estimateFee not implemented!");
-}
-
-function selectCoins (unspentCoins, neededSum) {
-    var total = 0;
-    var unspent = _.takeWhile(unspentCoins, function(n) {
-        var value = parseInt(n.cs) == NaN ? 0 : parseInt(n.cs);
-        return total >= neededSum ? false : (total += value) && true;
-    });
-
-    if (total < neededSum)
-        throw new Error ("Not enough coins!");
-
-    unspentCoins = _.difference(unspentCoins, unspent);
-    unspent = _.filter(unspent, function(n) {return parseInt(n.cs) != NaN;});
-    return unspent;        
-}
-
-    
-
-function createPayload (ins, outs, opid, outsums) {
-    return '(' + JSON.stringify(_.range(ins)) + ', ' +
-        JSON.stringify(_.range(outs)) + ', ' +
-        outs.toString() + ') ' +
-        opid.toString() + ' ' + JSON.stringify(outsums);
-}
-
-
 module.exports = {
-    composeColoredTx : composeColoredTx
-    composeBitconTx  : composeBitcoinTx
+    composeColoredSendTx  : composeColoredSendTx,
+    composeBitcoinTx      : composeBitcoinTx,
+    composeColoredIssueTx : composeColoredIssueTx
 }
-
-    
