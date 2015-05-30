@@ -2,7 +2,7 @@
   "name": "Maketx",
   "version": "1.0.0",
   "description": "\"make color tx cli tool\"",
-  "main": "maketx.js",
+  "main": "./src/maketx.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

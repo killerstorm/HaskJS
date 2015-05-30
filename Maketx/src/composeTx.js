@@ -3,7 +3,6 @@ const bitcoin     = require('bitcoinjs-lib');
 const buffertools = require('buffertools');
 const Transaction = bitcoin.Transaction;
 
-
 function createPayload (ins, outs, opid, outValues) {
     return '(' + JSON.stringify(_.range(ins)) + ', ' +
         JSON.stringify(_.range(outs)) + ', ' +
@@ -53,7 +52,6 @@ function composeColoredIssueTx (value, targets) {
   var payload = createPayload([], [0], 1, [value]);
   return {inputs: [], targets: targets, payload: payload};
 }
- 
  
 function composeBitcoinTx (coloredTx, context, unspentCoins) {
     var tx = new Transaction();
