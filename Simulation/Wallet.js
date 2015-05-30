@@ -1,8 +1,8 @@
-function Wallet(simulation, privKey, pubKey, addr) {
+function Wallet(name) {
   this.simulation = simulation;
-  this.privkey = privKey; 
-  this.pubkey = pubKey; 
-  this.address = addr; 
+  this.privkey = name; 
+  this.pubkey =  name; 
+  this.address = name; 
 }
  
 Wallet.prototype.issueCoin = function (kernel, value) {
@@ -21,5 +21,8 @@ Wallet.prototype.signTx = function (tx) {
   return tx;  
 }
 
+Wallet.prototype.getAddress() {
+    return this.address;
+}
 
 module.exports = Wallet
