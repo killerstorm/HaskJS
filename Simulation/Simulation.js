@@ -1,4 +1,5 @@
-var _ = require('lodash')
+var _ = require('lodash');
+var bitcoin = require('bitcoinjs-lib');
 
 function Simulation() {
     this.transactions = [];
@@ -16,12 +17,12 @@ Simulation.prototype.addTx = function (tx) {
 }
 
 Simulation.prototype.getUnspentCoins(addr) {
-    
+    //TODO
+    // get target address from txid???
+    // filter coins from this.coins by out[n].address == addr
     
 }
 
-Simulation.prototype.kernel = function(kernelName) {
-}
 
 function Wallet(simulation, name) {
     this.simulation = simulation;
