@@ -17,6 +17,10 @@ Simulation.prototype.addTx = function (tx) {
 
 Simulation.prototype.getUnspentCoins(addr) {
     
+    
+}
+
+Simulation.prototype.kernel = function(kernelName) {
 }
 
 function Wallet(simulation, name) {
