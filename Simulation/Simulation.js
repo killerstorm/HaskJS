@@ -8,7 +8,7 @@ function Simulation() {
 }
  
 Simulation.prototype.wallet = function (name) {
-    this.wallets[name] = new Wallet(this, name);
+    this.wallets[name] = new Wallet(this);
     return this.wallets[name];
 }
  
@@ -23,12 +23,12 @@ Simulation.prototype.getUnspentCoins(addr) {
     
 }
 
-
-function Wallet(simulation, name) {
+function Wallet(simulation) {
     this.simulation = simulation;
-    this.privkey = name; 
-    this.pubkey =  name; 
-    this.address = name; 
+    var key = bitoin.ECKey.makeRandom();
+    this.privkey = key;
+    this.pubkey  = key.pub;
+    this.address = key.pub.getAddress();
 }
  
 Wallet.prototype.issueCoin = function (kernel, value) {
