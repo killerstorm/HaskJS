@@ -25,10 +25,10 @@ Simulation.prototype.getUnspentCoins(addr) {
 
 function Wallet(simulation) {
     this.simulation = simulation;
-    var key = bitoin.ECKey.makeRandom();
+    var key = bitcoin.ECKey.makeRandom();
     this.privkey = key;
     this.pubkey  = key.pub;
-    this.address = key.pub.getAddress();
+    this.address = key.pub.getAddress().toString();
 }
  
 Wallet.prototype.issueCoin = function (kernel, value) {
@@ -42,8 +42,6 @@ Wallet.prototype.getUnspentCoins = function () {
 }
  
 Wallet.prototype.signTx = function (tx) {
-    // TODO
-    // nobody's going to check if we have signed it so unsigned works too
     return tx;  
 }
 
