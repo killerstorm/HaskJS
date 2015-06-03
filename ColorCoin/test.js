@@ -1,5 +1,5 @@
-const ck = require ('./ckernel.js');
-const main = require('./main.js');
+const ck = require ('./src/ckernel.js');
+const h = require('./main.js').getHaste();
 
 const bc = require('bitcoinjs-lib');
 const bt = require('buffertools');
@@ -8,12 +8,6 @@ const _ = require('underscore');
 
 
 var Transaction = bc.Transaction;
-
-var h = main.getHaste();
-
-
-
-//transaction.ins.map(function (txin) { return [txin.hash.toString('hex'), txin.index]  })
 
 var unspent = [];
 
