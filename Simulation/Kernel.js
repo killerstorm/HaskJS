@@ -18,7 +18,6 @@ function ColorValue() {
 
 }
 
-
 module.exports = {
     Kernel     : Kernel,
     Color      : Color,
