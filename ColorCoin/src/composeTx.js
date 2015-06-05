@@ -3,6 +3,8 @@ const bitcoin     = require('bitcoinjs-lib');
 const buffertools = require('buffertools');
 const Transaction = bitcoin.Transaction;
 
+var dustThreshold = 546;
+
 function createPayload (ins, outs, opid, outValues) {
     return '(' + JSON.stringify(_.range(ins)) + ', ' +
         JSON.stringify(_.range(outs)) + ', ' +
@@ -53,7 +55,7 @@ function composeColoredIssueTx (value, targets) {
   return {inputs: [], targets: targets, payload: payload};
 }
  
-function composeBitcoinTx (coloredTx, context, unspentCoins) {
+function composeBitcoinTx (coloredTx, unspentCoins) {
     var tx = new Transaction();
  
     unspentCoins = _.reject(unspentCoins, 'cv')
@@ -61,11 +63,11 @@ function composeBitcoinTx (coloredTx, context, unspentCoins) {
     var coloredTargets = coloredTx.targets;
     var coloredInputs  = coloredTx.inputs;
     var fee = 10000;
-    var uncoloredNeeded   = coloredTargets.length * context.dustThreshold + fee;
+    var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee;
  
     _.each(coloredTargets, function(target) {
         tx.addOutput(bictoin.scripts.pubKeyHashOutput(
-            new Buffer (target.address)), context.dustThreshold);
+            new Buffer (target.address)), dustThreshold);
     });
  
     _.each(coloredInputs, function(coin) {
