@@ -33,7 +33,8 @@ Simulation.prototype.getUnspentCoins(addr) {
             }
         });
     });
-                
+
+    _.difference(this.coins, unspent);
     return unspent;                   
 }
 
