@@ -15,7 +15,7 @@ Simulation.prototype.wallet = function (name) {
     return this.wallets[name];
 }
  
-Simulation.addTx = function (tx) {
+Simulation.prototype.addTx = function (tx) {
     this.transactions.push(tx);
 }
 
