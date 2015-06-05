@@ -1,8 +1,9 @@
 var _ = require('lodash');
 var bitcoin = require('bitcoinjs-lib');
-var Kernel = require('./kernel.js');
+var kernel = require('./kernel.js');
 
 function Simulation() {
+    this.kernel = new kernel.Kernel(); 
     this.transactions = [];
     this.wallets = {};
     this.coins = [];
