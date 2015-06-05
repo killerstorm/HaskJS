@@ -5,6 +5,7 @@ function Simulation() {
     this.transactions = [];
     this.wallets = {};
     this.coins = [];
+    this.unspentCoins = [];
 }
  
 Simulation.prototype.wallet = function (name) {
@@ -34,7 +35,7 @@ Simulation.prototype.getUnspentCoins(addr) {
         });
     });
 
-    _.difference(this.coins, unspent);
+    _.difference(this.unspentCoins, unspent);
     return unspent;                   
 }
 
@@ -44,6 +45,7 @@ function Wallet(simulation) {
     this.privkey = key;
     this.pubkey  = key.pub;
     this.address = key.pub.getAddress().toString();
+    this.coins = [];
 }
  
 Wallet.prototype.issueCoin = function (kernel, value) {
@@ -53,11 +55,12 @@ Wallet.prototype.issueCoin = function (kernel, value) {
 }
  
 Wallet.prototype.getUnspentCoins = function () {
-    return this.simulation.getUnspentCoins(this.address);
+    this.coins = this.coins.concat(this.simulation.getUnspentCoins(this.address));
+    return this.coins;
 }
  
 Wallet.prototype.signTx = function (tx) {
-    return tx;  
+    for (var i = 0; i < tx.ins.length; tx.sign(i, this.privkey), i++);  
 }
 
 Wallet.prototype.getAddress() {
