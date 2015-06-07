@@ -6,22 +6,24 @@ const Transaction = bitcoin.Transaction;
 var dustThreshold = 546;
 
 function createPayload (ins, outs, opid, outValues) {
-    return '(' + JSON.stringify(_.range(ins)) + ', ' +
+    return '(' +
+        JSON.stringify(_.range(ins)) + ', ' +
         JSON.stringify(_.range(outs)) + ', ' +
-        outs.toString() + ') ' +
+        outs.length.toString() + ') ' +
         opid.toString() + ' ' + JSON.stringify(outValues);
 }
  
 function selectCoins (unspentCoins, coinValueFn, neededSum) {
     var total = 0;
     var selected = [];
+    
     for (var i = 0; i < unspentCoins.length; ++i) {
         var coinValue = coinValueFn(unspentCoins[i]);
         if (coinValue > 0) {
             total += coinValue;
             selected.push(unspentCoins[i]);
             if (total >= neededSum) break;
-        }      
+        }
     }
     
     if (total < neededSum)
@@ -46,16 +48,14 @@ function composeColoredSendTx (unspentCoins, targets, changeAddress) {
         targets.push({address: changeAddress, cv: change.toString()});
         outValues.push(change);
     }
-    var payload = createPayload(coins, targets, 0, outValues);
-    return {inputs: coins, targets: targets, payload: payload};
+    return {inputs: coins, targets: targets};
 }
  
-function composeColoredIssueTx (value, targets) {
-  var payload = createPayload([], [0], 1, [value]);
-  return {inputs: [], targets: targets, payload: payload};
+function composeColoredIssueTx (targets) {
+    return {inputs: [], targets: targets};
 }
  
-function composeBitcoinTx (coloredTx, unspentCoins) {
+function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
     var tx = new Transaction();
  
     unspentCoins = _.reject(unspentCoins, 'cv')
@@ -64,9 +64,11 @@ function composeBitcoinTx (coloredTx, unspentCoins) {
     var coloredInputs  = coloredTx.inputs;
     var fee = 10000;
     var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee;
- 
+
+    console.log(coloredTargets);
     _.each(coloredTargets, function(target) {
-        tx.addOutput(bictoin.scripts.pubKeyHashOutput(
+        console.log(target);
+        tx.addOutput(bitcoin.scripts.pubKeyHashOutput(
             new Buffer (target.address)), dustThreshold);
     });
  
@@ -76,8 +78,9 @@ function composeBitcoinTx (coloredTx, unspentCoins) {
     });
  
     var uncoloredSum = 0;
+    var uncoloredInputs;
     if (uncoloredNeeded > 0) {
-      var uncoloredInputs = selectCoins(unspentCoins, function (coin) { return coin.value }, 
+      uncoloredInputs = selectCoins(unspentCoins, function (coin) { return coin.value }, 
                                         uncoloredNeeded);
       uncoloredSum        = _.sum(_.pluck(uncoloredInputs, 'value'));
       _.each(uncoloredInputs, function(coin) {  tx.addInput(coin.txid, coin.index); });
@@ -86,11 +89,20 @@ function composeBitcoinTx (coloredTx, unspentCoins) {
     var change = uncoloredSum - uncoloredNeeded;
  
     if (change > 0) {
-        tx.addOutput(bictoin.scripts.pubKeyHashOutput(
-            new Buffer (context.changeAddress)), change);
+        console.log(changeAddress);
+        tx.addOutput(bitcoin.scripts.pubKeyHashOutput(
+            new Buffer (changeAddress)), change);
     }
- 
-    tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(coloredTx.payload)), 0);
+
+
+    var payload = createPayload (
+        coloredInput.length + uncoloredInputs.length,
+        change ? coloredTargets.length + 1 : coloredTargets.length,
+        coloredInputs.length ? 1 : 0,
+        _.pluck(coloredTargets, 'value').append(change ? [change] : [])
+    );
+    
+    tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0);
   
     return tx;  
 }
