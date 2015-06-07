@@ -38,7 +38,7 @@ packToJSON ((txid, index), cs) = toJSStr $
   "{" ++
   "\"txid\" : \""  ++ txid       ++ "\", " ++
   "\"index\" : " ++ show index ++ ", " ++
-  "\"cs\" : \""    ++ coinstate  ++ "\"}"
+  "\"value\" : \""    ++ coinstate  ++ "\"}"
   where coinstate = case cs of
           JustCS x  -> show x
           MissingCS -> "M"
@@ -58,8 +58,8 @@ topSort xs = return $  map (\(Tx a b c d) -> (a, b, c, d)) g
         g  = reverse $ topologicalSort g' g' -- full sorted graph
 
              
-runKernel :: (String, [(CoinId, Integer)], TxId) -> IO [JSString]
-runKernel (payload, inputs, txid) = return $ map packToJSON coins
+runKernel :: (String, [(CoinId, Integer)], TxId, Int) -> IO [JSString]
+runKernel (payload, inputs, txid, _) = return $ map packToJSON coins
   where outputs      = kernel payload $ map (JustCS . snd) inputs
         coins        = zip (zip (repeat txid) [0..]) outputs
                        
