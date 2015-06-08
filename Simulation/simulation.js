@@ -3,7 +3,7 @@ var bitcoin = require('bitcoinjs-lib');
 var kernel = require('./kernel.js');
 
 function Simulation() {
-    this.kernel = new kernel.Kernel(); 
+    this.kernel = new kernel.Kernel(this);
     this.transactions = [];
     this.wallets = {};
     this.coins = [];
@@ -32,8 +32,8 @@ Simulation.prototype.getUnspentCoins = function (addr) {
                         unspent.push(c);
                     }
                 });
-                index++;
             }
+            index++;
         });
     });
 
@@ -58,7 +58,10 @@ Wallet.prototype.issueCoin = function (kernel, value) {
 }
 
 Wallet.prototype.send = function (value, target) {
-    var tx = this.simulation.kernel.composeSendTx(this.getBalance(), target, this.getAddress());
+    var tx = this.simulation.kernel.composeSendTx(this.getBalance(),
+                                                  [{'address' : target.getAddress(), 'value' : value}],
+                                                  this.getAddress());
+    
     this.simulation.addTx(this.signTx(tx));
 }
 
