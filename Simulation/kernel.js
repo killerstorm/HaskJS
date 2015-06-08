@@ -1,19 +1,21 @@
 var composetx = require('../ColorCoin/src/composeTx.js');
 var ckernel = require('../ColorCoin/src/ckernel.js');
 var haste = require('../ColorCoin/main.js').getHaste();
+var _ = require('lodash');
+
 
 function Kernel() {
     
 }
 
-Kernel.prototype.run = function(tx) {
-    var _tx = ckernel.createTx(tx);
-    var coins = haste.runKernel(_tx);
+Kernel.prototype.run = function(transactions) {
+    var txGraph = _.map(transactions, ckernel.createTx);
+    var coins = haste.runCoinKernelOnGraph(txGraph);
     return coins;
 }
 
-Kernel.prototype.composeIssueTx = function (value, targets) {
-    var tx = composetx.composeColoredIssueTx (value, targets);
+Kernel.prototype.composeIssueTx = function (targets) {
+    var tx = composetx.composeColoredIssueTx (targets);
     return tx;
 }
 
@@ -22,8 +24,8 @@ Kernel.prototype.composeSendTx = function (unspent, targets, changeAddress) {
     return tx;
 }
 
-Kernel.prototype.composeBitcoinTx = function (tx, unspent) {
-    var tx = composetx.composeBitcoinTx (tx, unspent);
+Kernel.prototype.composeBitcoinTx = function (tx, unspent, changeAddress) {
+    var tx = composetx.composeBitcoinTx (tx, unspent, changeAddress);
     return tx;
 }
         
