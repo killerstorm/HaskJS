@@ -6,10 +6,11 @@ const Transaction = bitcoin.Transaction;
 var dustThreshold = 546;
 
 function createPayload (ins, outs, opid, outValues) {
+    console.log(outs);
     return '(' +
         JSON.stringify(_.range(ins)) + ', ' +
         JSON.stringify(_.range(outs)) + ', ' +
-        outs.length.toString() + ') ' +
+        outs + ') ' +
         opid.toString() + ' ' + JSON.stringify(outValues);
 }
  
@@ -65,11 +66,9 @@ function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
     var fee = 10000;
     var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee;
 
-    console.log(coloredTargets);
     _.each(coloredTargets, function(target) {
-        console.log(target);
         tx.addOutput(bitcoin.scripts.pubKeyHashOutput(
-            new Buffer (target.address)), dustThreshold);
+            new Buffer (target.address)), target.value);
     });
  
     _.each(coloredInputs, function(coin) {
@@ -82,24 +81,22 @@ function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
     if (uncoloredNeeded > 0) {
       uncoloredInputs = selectCoins(unspentCoins, function (coin) { return coin.value }, 
                                         uncoloredNeeded);
-      uncoloredSum        = _.sum(_.pluck(uncoloredInputs, 'value'));
+      uncoloredSum        = _.sum(uncoloredInputs, 'value');
       _.each(uncoloredInputs, function(coin) {  tx.addInput(coin.txid, coin.index); });
     }
  
     var change = uncoloredSum - uncoloredNeeded;
  
     if (change > 0) {
-        console.log(changeAddress);
         tx.addOutput(bitcoin.scripts.pubKeyHashOutput(
             new Buffer (changeAddress)), change);
     }
 
-
     var payload = createPayload (
-        coloredInput.length + uncoloredInputs.length,
+        coloredInputs === [] ? coloredInputs.length + uncoloredInputs.length : 0,
         change ? coloredTargets.length + 1 : coloredTargets.length,
-        coloredInputs.length ? 1 : 0,
-        _.pluck(coloredTargets, 'value').append(change ? [change] : [])
+        coloredInputs.length ? 0 : 1,
+        _.pluck(coloredTargets, 'value').concat(change == 0 ? [] : [change])
     );
     
     tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0);
