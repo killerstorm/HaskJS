@@ -10,13 +10,15 @@ function Simulation() {
 }
  
 Simulation.prototype.wallet = function (name) {
-    this.wallets[name] = new Wallet(this);
+    this.wallets[name] = new Wallet(this, name);
     return this.wallets[name];
 }
  
 Simulation.prototype.addTx = function (tx) {
     return this.transactions.push(tx);
 }
+
+
 
 Simulation.prototype.getUnspentCoins = function (addr) {
     var unspent = [];  
@@ -39,7 +41,8 @@ Simulation.prototype.getUnspentCoins = function (addr) {
     return unspent;                   
 }
 
-function Wallet(simulation) {
+function Wallet(simulation, name) {
+    this.name = name;
     this.simulation = simulation;
     var key = bitcoin.ECKey.makeRandom();
     this.privkey = key;
@@ -54,9 +57,9 @@ Wallet.prototype.issueCoin = function (kernel, value) {
     this.simulation.addTx(signedTx);
 }
 
-
 Wallet.prototype.send = function (value, target) {
-    var tx = this.simulation.composeSendTx();
+    var tx = this.simulation.kernel.composeSendTx(this.getBalance(), target, this.getAddress());
+    this.simulation.addTx(this.signTx(tx));
 }
 
 Wallet.prototype.getUnspentCoins = function () {
