@@ -6,7 +6,6 @@ const Transaction = bitcoin.Transaction;
 var dustThreshold = 546;
 
 function createPayload (ins, outs, opid, outValues) {
-    console.log(outs);
     return '(' +
         JSON.stringify(_.range(ins)) + ', ' +
         JSON.stringify(_.range(outs)) + ', ' +
@@ -67,8 +66,7 @@ function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
     var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee;
 
     _.each(coloredTargets, function(target) {
-        tx.addOutput(bitcoin.scripts.pubKeyHashOutput(
-            new Buffer (target.address)), target.value);
+        tx.addOutput(target.address, target.value);
     });
  
     _.each(coloredInputs, function(coin) {
@@ -88,8 +86,7 @@ function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
     var change = uncoloredSum - uncoloredNeeded;
  
     if (change > 0) {
-        tx.addOutput(bitcoin.scripts.pubKeyHashOutput(
-            new Buffer (changeAddress)), change);
+        tx.addOutput(changeAddress, change);
     }
 
     var payload = createPayload (
