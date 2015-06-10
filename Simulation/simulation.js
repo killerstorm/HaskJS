@@ -21,24 +21,28 @@ Simulation.prototype.addTx = function (tx) {
 
 
 Simulation.prototype.getUnspentCoins = function (addr) {
-    var unspent = [];  
+    var unspent = [];
+    var sim = this;
     _.map(this.transactions, function(tx) {
         var index = 0;
         _.map(tx.outs, function(out) {
-            if (bitcoin.Address.fromOutputScript(out.script).toString() == addr) {
-                _.map(this.coins, function(c) {
-                    id = tx.getId();
-                    if (c.txid == id && c.index == index && c.value == out.value) {
+            if (out.script.chunks.length != 2 &&
+                bitcoin.Address.fromOutputScript(out.script).toString() == addr) {
+                _.find(sim.coins, function(c) {
+                    return
+                        c.txid == tx.getId() &&
+                        c.index == index     &&
+                        c.value == out.value &&
                         unspent.push(c);
-                    }
+                    
                 });
             }
             index++;
         });
     });
-
-    _.difference(this.coins, unspent);
-    return unspent;                   
+    
+    this.coins = _.difference(this.coins, unspent);
+    return unspent;                    
 }
 
 function Wallet(simulation, name) {
