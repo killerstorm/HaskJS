@@ -29,14 +29,10 @@ Simulation.prototype.getUnspentCoins = function (addr) {
     var unspent = [];
     var sim = this;
     var st = this.transactions;
-    _.each(this.transactions, function(x) {
-        console.log("tx => \n" + JSON.stringify(x));
-    });
     console.log(this.transactions.length);
            
     _.map(sim.transactions, function(tx) {
         var index = 0;
-        console.log("transactions eq = " + (sim.transactions == st));
         _.each(tx.outs, function(out) {
             if (out.script.chunks.length != 2 &&
                 bitcoin.Address.fromOutputScript(out.script).toString() == addr) {
