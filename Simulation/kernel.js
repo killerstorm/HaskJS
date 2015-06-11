@@ -24,8 +24,8 @@ Kernel.prototype.composeSendTx = function (unspent, targets, changeAddress) {
     return tx;
 }
 
-Kernel.prototype.composeBitcoinTx = function (tx, unspent, changeAddress) {
-    var tx = composetx.composeBitcoinTx (tx, unspent, changeAddress);
+Kernel.prototype.composeBitcoinTx = function (tx, uncoloredWallet) {
+    var tx = composetx.composeBitcoinTx (tx, uncoloredWallet);
     return tx;
 }
         
@@ -34,11 +34,9 @@ function Color() {
     //TODO
 }
 
-
 function ColorValue() {
     throw new Error ("ColorValue not implemented");
     //TODO
-
 }
 
 module.exports = {
