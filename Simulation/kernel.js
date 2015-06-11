@@ -4,8 +4,8 @@ var haste = require('../ColorCoin/main.js').getHaste();
 var _ = require('lodash');
 
 
-function Kernel() {
-    
+function Kernel(simulation) {
+    this.simulation = simulation;
 }
 
 Kernel.prototype.run = function(transactions) {
@@ -34,9 +34,11 @@ function Color() {
     //TODO
 }
 
+
 function ColorValue() {
     throw new Error ("ColorValue not implemented");
     //TODO
+
 }
 
 module.exports = {
