@@ -27,7 +27,6 @@ Simulation.prototype.addCoins = function(coins) {
 Simulation.prototype.getUnspentCoins = function (addr) {
     var unspent = [];
     var sim = this;
-    var st = this.transactions;
      
     _.map(sim.transactions, function(tx) {
         var index = 0;
