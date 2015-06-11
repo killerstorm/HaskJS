@@ -9,7 +9,6 @@ function Simulation(name) {
     this.wallets = {};
     this.coins = [];
     this.wallet('uncolored');
-
 }
  
 Simulation.prototype.wallet = function (name) {
@@ -29,8 +28,7 @@ Simulation.prototype.getUnspentCoins = function (addr) {
     var unspent = [];
     var sim = this;
     var st = this.transactions;
-    console.log(this.transactions.length);
-           
+     
     _.map(sim.transactions, function(tx) {
         var index = 0;
         _.each(tx.outs, function(out) {
@@ -47,7 +45,8 @@ Simulation.prototype.getUnspentCoins = function (addr) {
             }
             index++;
         });
-    }); 
+    });
+    
     this.coins = _.difference(this.coins, unspent);
     return unspent;                   
 }
@@ -82,7 +81,9 @@ Wallet.prototype.send = function (value, target) {
                                                   this.simulation.wallets['uncolored'].getUnspentCoins(),
                                                   this.simulation.wallets['uncolored'].getAddress()
                                                  );
-    this.simulation.addTx(this.signTx(tx));
+    tx = this.signTx(tx);
+    this.simulation.addTx(tx);
+    this.simulation.addCoins(this.simulation.kernel.run([tx]));
 }
 
 Wallet.prototype.getUnspentCoins = function () {
