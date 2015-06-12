@@ -15,17 +15,9 @@ function createPayload (ins, outs, opid, outValues) {
  
 function selectCoins (unspentCoins, coinValueFn, neededSum) {
     var total = 0;
-    var selected = [];
-    
-    for (var i = 0; i < unspentCoins.length; ++i) {
-        var coinValue = coinValueFn(unspentCoins[i]);
-        if (coinValue > 0) {
-            total += coinValue;
-            selected.push(unspentCoins[i]);
-            if (total >= neededSum) break;
-        }
-    }
-    
+
+    var selected = _.takeWhile(unspentCoins, function (n) { return (total += coinValueFn(n)) >= neededSum });
+
     if (total < neededSum)
         throw new Error ("Not enough coins!");
  
@@ -34,20 +26,19 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
    
 function composeColoredSendTx (unspentCoins, targets, changeAddress) {
     function coinValueFn (coin) {
-        return coin.cv;
+        return coin.value;
     }
  
     targets = _.clone(targets);
-    var outValues =  _.map(targets, coinValueFn);
-    var neededSum = _.sum(outValues);
+    var neededSum = _.sum(targets, 'value');
     var coins     = selectCoins(unspentCoins, coinValueFn, neededSum);
-    var inputSum  = _.sum(_.map(coins, coinValueFn));
+    var inputSum  = _.sum(coins, 'cv');
     var change    = inputSum - neededSum;   
  
     if (change) {
-        targets.push({address: changeAddress, cv: change.toString()});
-        outValues.push(change);
+        targets.push({address: changeAddress, value: change});
     }
+    
     return {inputs: coins, targets: targets};
 }
  
@@ -106,7 +97,6 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
     
     return tx;  
 }
-
 
 module.exports = {
     composeColoredSendTx  : composeColoredSendTx,
