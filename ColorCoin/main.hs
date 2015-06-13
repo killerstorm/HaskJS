@@ -38,7 +38,7 @@ packToJSON ((txid, index), cs) = toJSStr $
   "{" ++
   "\"txid\" : \""  ++ txid       ++ "\", " ++
   "\"index\" : " ++ show index ++ ", " ++
-  "\"cv\" : "    ++ coinstate  ++ "}"
+  "\"value\" : "    ++ coinstate  ++ "}"
   where coinstate = case cs of
           JustCS x  -> show x
           MissingCS -> "M"

@@ -15,7 +15,7 @@ function createPayload (ins, outs, opid, outValues) {
  
 function selectCoins (unspentCoins, coinValueFn, neededSum) {
     var total = 0;
-
+    
     var selected = _.takeWhile(unspentCoins, function (n) { return (total += coinValueFn(n)) >= neededSum });
 
     if (total < neededSum)
@@ -28,14 +28,19 @@ function composeColoredSendTx (unspentCoins, targets, changeAddress) {
     function coinValueFn (coin) {
         return coin.value;
     }
- 
+
+    console.log("unspent coins = " + JSON.stringify(unspentCoins));
     targets = _.clone(targets);
     var neededSum = _.sum(targets, 'value');
     var coins     = selectCoins(unspentCoins, coinValueFn, neededSum);
-    var inputSum  = _.sum(coins, 'cv');
+    var inputSum  = _.sum(coins, 'value');
     var change    = inputSum - neededSum;   
- 
+
+    console.log("needed sum = " + neededSum);
+    console.log("input sum = " + inputSum);
+    console.log("change = " + change);
     if (change) {
+        console.log("change add " + change);
         targets.push({address: changeAddress, value: change});
     }
     

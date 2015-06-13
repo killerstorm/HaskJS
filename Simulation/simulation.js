@@ -2,6 +2,11 @@ var _ = require('lodash');
 var bitcoin = require('bitcoinjs-lib');
 var kernel = require('./kernel.js');
 
+const coinbaseTxId = '0000000000000000000000000000000000000000000000000000000000000000';
+const coinbaseOutIndex = 0xFFFFFFFF;
+
+
+
 function Simulation(name) {
     this.name = name || 'test';
     this.kernel = new kernel.Kernel(this);
@@ -9,8 +14,21 @@ function Simulation(name) {
     this.wallets = {};
     this.coins = [];
     this.wallet('uncolored');
+    this.init();
 }
- 
+
+Simulation.prototype.init = function() {
+    var coinbaseTx = new bitcoin.Transaction();
+    coinbaseTx.addInput(coinbaseTxId, coinbaseOutIndex);
+    coinbaseTx.addOutput(this.wallets['uncolored'].getAddress(), 25000000);
+    coinbaseTx.addOutput(bitcoin.scripts.nullDataOutput(
+        new Buffer ('([] [0] 1) 1 [1000000]')), 0);
+    
+    this.addTx(coinbaseTx);
+    this.addCoins([{"txid" : coinbaseTx.getId(), "index" : 0, "value" : 25000000}]);
+    
+}
+
 Simulation.prototype.wallet = function (name) {
     this.wallets[name] = new Wallet(this, name);
     return this.wallets[name];
@@ -70,7 +88,7 @@ Wallet.prototype.issueCoin = function (value) {
 
 
 Wallet.prototype.send = function (value, target) {
-    var tx = this.simulation.kernel.composeSendTx(this.getBalance(),
+    var tx = this.simulation.kernel.composeSendTx(this.getUnspentCoins(),
                                                   [{'address' : target.getAddress(), 'value' : value}],
                                                   this.getAddress());
     tx = this.simulation.kernel.composeBitcoinTx (tx, this.simulation.wallets['uncolored']);
