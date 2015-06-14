@@ -26,7 +26,7 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
    
 function composeColoredSendTx (unspentCoins, targets, changeAddress) {
     function coinValueFn (coin) {
-        return coin.value;
+        return coin.cv;
     }
 
     console.log("unspent coins = " + JSON.stringify(unspentCoins));
