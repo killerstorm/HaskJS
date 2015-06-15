@@ -55,7 +55,6 @@ Simulation.prototype.getUnspentCoins = function (addr) {
                     return (
                         c.txid == tx.getId() &&
                         c.index == index     &&
-                        c.value == out.value &&
                         unspent.push(c)
                     );
                 });
