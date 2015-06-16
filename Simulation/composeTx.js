@@ -56,7 +56,8 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
     var unspentCoins = uncoloredWallet.getUnspentCoins();
     var changeAddress = uncoloredWallet.getAddress();
 
-    
+    var coins = [];
+    var index = 0;
     unspentCoins = _.reject(unspentCoins, 'cv')
  
     var coloredTargets = coloredTx.targets;
@@ -66,6 +67,8 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
 
     _.each(coloredTargets, function(target) {
         tx.addOutput(target.address, target.value);
+        coins.push({"index" : index, "value" : target.value, "coinstate" : target.value.toString()});
+        index++;
     });
  
     _.each(coloredInputs, function(coin) {
@@ -86,6 +89,7 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
  
     if (change > 0) {
         tx.addOutput(changeAddress, change);
+        coins.push({"index" : index, "value" : change, "coinstate" : change.toString()});
     }
 
     var payload = createPayload (
@@ -99,7 +103,7 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
     
     uncoloredWallet.coins = _.difference(uncoloredWallet.coins, uncoloredInputs);
     
-    return tx;  
+    return {'tx' : tx, 'coins' : coins}; 
 }
 
 module.exports = {
