@@ -89,18 +89,14 @@ Wallet.prototype.issueCoin = function (value) {
 
 
 Wallet.prototype.send = function (value, target) {
-    var tx = this.simulation.kernel.composeSendTx(this.getUnspentCoins(),
+    var coloredTx = this.simulation.kernel.composeSendTx(this,
                                                   [{'address' : target.getAddress(), 'value' : value}],
                                                   this.getAddress());
-    tx = this.simulation.kernel.composeBitcoinTx (tx, this.simulation.wallets['uncolored']);
-    tx = this.signTx(tx);
+    var tc = this.simulation.kernel.composeBitcoinTx (coloredTx, this.simulation.wallets['uncolored']);
+    var tx = this.signTx(tc.tx);
     this.simulation.addTx(tx);
-    this.simulation.addCoins(_.map(this.simulation.kernel.run([tx]), JSON.parse));
-}
-
-Wallet.prototype.getUnspentCoins = function () {
-    this.coins = this.coins.concat(this.simulation.getUnspentCoins(this.address));
-    return this.coins;
+    var txid = tx.getId();
+    this.simulation.addCoins(_.each(tc.coins, function (n) { _.set(n, 'txid', txid);}));
 }
  
 Wallet.prototype.signTx = function (tx) {
