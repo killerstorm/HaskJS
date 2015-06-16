@@ -1,37 +1,69 @@
-var Simulation = require('./simulation.js')
-var kernel     = require('./kernel.js')
+var Simulation = require('../simulation.js')
+var kernel     = require('../kernel.js')
 var bitcoin    = require('bitcoinjs-lib')
 var _          = require('lodash')
+var expect     = require('chai').expect
 
 
-const coinbaseTxId = '0000000000000000000000000000000000000000000000000000000000000000';
-const coinbaseOutIndex = 0xFFFFFFFF;
 
-var sim = new Simulation();
+describe("Simulation", function() {
+    var sim;
+    var uncolored;
+    var alice;
+    var bob;
+    
+    it("'new Simulation()' should return new simulation object", function() {
+        sim = new Simulation();
+        expect(sim).to.have.a.property('name', 'test');
+        expect(sim).to.have.a.property('transactions');
+        
+    });
+    
+    it("Uncolored wallet is initialised by default", function() {
+        expect(sim.wallets).to.have.a.property('uncolored');
+        uncolored = sim.wallets['uncolored'];
+    });
 
-var uncolored = sim.wallets['uncolored'];
-var alice  = sim.wallet('alice');
-var bob    = sim.wallet('bob');
+    describe("Wallets initialization", function() {
+        it("Alice's wallet initialisation", function() {
+            alice = sim.wallet('alice');
+            expect(Object.keys(sim.wallets).length).to.equal(2);
+        });
 
-console.log("uncolored address:\t" + uncolored.getAddress());
-console.log("Alice's address:\t" +  alice.getAddress());
-console.log("Bob's address:\t\t" +  bob.getAddress());
+        it("Bob's wallet initialisation", function() {
+            bob = sim.wallet('bob');
+            expect(Object.keys(sim.wallets).length).to.equal(3);
+        });
+    });
 
-var coinbaseTx = new bitcoin.Transaction();
-coinbaseTx.addInput(coinbaseTxId, coinbaseOutIndex);
-coinbaseTx.addOutput(uncolored.getAddress(), 25000000);
-coinbaseTx.addOutput(bitcoin.scripts.nullDataOutput(
-    new Buffer ('([] [0] 1) 1 [1000000]')), 0);
+    describe("Wallet operations", function() {
+        it("Get 'uncolored' balance, expected to equal 25 bitcoins (2500000000) by default", function() {
+            var uncoloredBalance = uncolored.getBalance();
+            expect(uncoloredBalance).to.equal(2500000000);
+        });
+        describe("Issue coin", function() {
+            it("Alice issues 10 bitcoins coin", function() {
+                alice.issueCoin(1000000000);
+            });
+        
+            it("Bob issues 20 bitcoins coin", function() {
+                bob.issueCoin(2000000000);
+            });
+        });
+        describe("Get balance", function() {
+            it("Alice's balance, expected to equal 1000000000 satoshi", function() {
+                var balance = alice.getBalance();
+                expect(balance).to.equal(1000000000);
+            });
 
-sim.addTx(coinbaseTx);
-sim.addCoins([{"txid" : coinbaseTx.getId(), "index" : 0, "value" : 25000000}]);
+            it("Bob's balance, expected to equal 2000000000 satoshi", function() {
+                var balance = bob.getBalance();
+                expect(balance).to.equal(2000000000);
+            });
+        });
+        
+    });
+     
+});
 
 
-alice.issueCoin(100000);
-
-
-alice.send(10000, bob);
-
-console.log('uncolored balance  = ' + uncolored.getBalance());
-console.log('alice\'s balance   = ' + alice.getBalance());
-console.log('bob\'s balance     = ' + bob.getBalance());
