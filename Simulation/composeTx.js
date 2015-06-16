@@ -103,7 +103,7 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
     
     uncoloredWallet.coins = _.difference(uncoloredWallet.coins, uncoloredInputs);
     
-    return {'tx' : tx, 'coins' : coins}; 
+    return {'tx' : tx, 'coins' : coins};  
 }
 
 module.exports = {
