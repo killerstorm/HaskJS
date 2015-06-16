@@ -24,23 +24,22 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
     return selected;
 }
    
-function composeColoredSendTx (unspentCoins, targets, changeAddress) {
+function composeColoredSendTx (wallet, targets, changeAddress) {
     function coinValueFn (coin) {
-        return coin.cv;
+        return coin.value;
     }
 
-    console.log("unspent coins = " + JSON.stringify(unspentCoins));
+    var unspentCoins = wallet.getUnspentCoins();
+
     targets = _.clone(targets);
     var neededSum = _.sum(targets, 'value');
     var coins     = selectCoins(unspentCoins, coinValueFn, neededSum);
     var inputSum  = _.sum(coins, 'value');
     var change    = inputSum - neededSum;   
 
-    console.log("needed sum = " + neededSum);
-    console.log("input sum = " + inputSum);
-    console.log("change = " + change);
+
+    wallet.coins = _.difference(wallet.coins, coins);
     if (change) {
-        console.log("change add " + change);
         targets.push({address: changeAddress, value: change});
     }
     
