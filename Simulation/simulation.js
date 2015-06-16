@@ -5,8 +5,6 @@ var kernel = require('./kernel.js');
 const coinbaseTxId = '0000000000000000000000000000000000000000000000000000000000000000';
 const coinbaseOutIndex = 0xFFFFFFFF;
 
-
-
 function Simulation(name) {
     this.name = name || 'test';
     this.kernel = new kernel.Kernel(this);
@@ -20,18 +18,18 @@ function Simulation(name) {
 Simulation.prototype.init = function() {
     var coinbaseTx = new bitcoin.Transaction();
     coinbaseTx.addInput(coinbaseTxId, coinbaseOutIndex);
-    coinbaseTx.addOutput(this.wallets['uncolored'].getAddress(), 25000000);
+    coinbaseTx.addOutput(this.wallets['uncolored'].getAddress(), 2500000000);
     coinbaseTx.addOutput(bitcoin.scripts.nullDataOutput(
         new Buffer ('([] [0] 1) 1 [1000000]')), 0);
     
     this.addTx(coinbaseTx);
-    this.addCoins([{"txid" : coinbaseTx.getId(), "index" : 0, "value" : 25000000}]);
+    this.addCoins([{"txid" : coinbaseTx.getId(), "index" : 0, "coinstate" : "2500000000", "value" : 2500000000}]);
     
 }
 
 Simulation.prototype.wallet = function (name) {
     this.wallets[name] = new Wallet(this, name);
-    return this.wallets[name];
+    return this.wallets[name];  
 }
  
 Simulation.prototype.addTx = function (tx) {
@@ -62,13 +60,13 @@ Simulation.prototype.getUnspentCoins = function (addr) {
             index++;
         });
     });
-    
     this.coins = _.difference(this.coins, unspent);
     return unspent;                   
 }
 
 function Wallet(simulation, name) {
     this.name = name;
+    this.colored 
     this.simulation = simulation;
     var key = bitcoin.ECKey.makeRandom();
     this.privkey = key;
@@ -78,7 +76,7 @@ function Wallet(simulation, name) {
 }
  
 Wallet.prototype.issueCoin = function (value) {
-   var coloredTx = this.simulation.kernel.composeIssueTx([{'address' : this.getAddress(), 'value' : value}]);
+    var coloredTx = this.simulation.kernel.composeIssueTx([{'address' : this.getAddress(), 'value' : value}]);
     //tc => tx + coins , { 'tx' : tx, 'coins' : coins }
     var tc = this.simulation.kernel.composeBitcoinTx (coloredTx, this.simulation.wallets['uncolored']);
     var tx = this.signTx(tc.tx);
@@ -98,6 +96,11 @@ Wallet.prototype.send = function (value, target) {
     var txid = tx.getId();
     this.simulation.addCoins(_.each(tc.coins, function (n) { _.set(n, 'txid', txid);}));
 }
+
+Wallet.prototype.getUnspentCoins = function () {
+    this.coins = this.coins.concat(this.simulation.getUnspentCoins(this.address));
+    return this.coins;
+}
  
 Wallet.prototype.signTx = function (tx) {
     var txb = new bitcoin.TransactionBuilder.fromTransaction(tx);
@@ -108,7 +111,7 @@ Wallet.prototype.signTx = function (tx) {
 
 Wallet.prototype.getBalance = function() {
     this.getUnspentCoins();
-    return _.sum(this.coins, 'value');
+    return _.sum(this.coins, "value");
 }
 
 Wallet.prototype.getAddress = function() {
