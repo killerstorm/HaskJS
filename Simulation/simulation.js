@@ -78,11 +78,13 @@ function Wallet(simulation, name) {
 }
  
 Wallet.prototype.issueCoin = function (value) {
-    var tx = this.simulation.kernel.composeIssueTx([{'address' : this.getAddress(), 'value' : value}]);
-    tx = this.simulation.kernel.composeBitcoinTx (tx, this.simulation.wallets['uncolored']);
-    tx = this.signTx(tx);
+   var coloredTx = this.simulation.kernel.composeIssueTx([{'address' : this.getAddress(), 'value' : value}]);
+    //tc => tx + coins , { 'tx' : tx, 'coins' : coins }
+    var tc = this.simulation.kernel.composeBitcoinTx (coloredTx, this.simulation.wallets['uncolored']);
+    var tx = this.signTx(tc.tx);
     this.simulation.addTx(tx);
-    this.simulation.addCoins(_.map(this.simulation.kernel.run([tx]), JSON.parse));
+    var txid = tx.getId();
+    this.simulation.addCoins(_.each(tc.coins, function (n) { _.set(n, 'txid', txid);}));
 }
 
 
