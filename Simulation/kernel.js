@@ -1,5 +1,5 @@
-var composetx = require('../ColorCoin/src/composeTx.js');
-var ckernel = require('../ColorCoin/src/ckernel.js');
+var composetx = require('./composeTx.js');
+var createTx = require('../ColorCoin/src/kerneltx.js');
 var haste = require('../ColorCoin/main.js').getHaste();
 var _ = require('lodash');
 
@@ -8,9 +8,9 @@ function Kernel(simulation) {
     this.simulation = simulation;
 }
 
-Kernel.prototype.run = function(transactions) {
-    var txGraph = _.map(transactions, ckernel.createTx);
-    var coins = haste.runCoinKernelOnGraph(txGraph);
+Kernel.prototype.runKernel = function(tx) {
+    var txGraph = _.map(transactions, createTx);
+    var coins = _.map(haste.runCoinKernelOnGraph(txGraph), JSON.parse);
     return coins;
 }
 
@@ -35,10 +35,9 @@ function Color() {
 }
 
 
-function ColorValue() {
-    throw new Error ("ColorValue not implemented");
-    //TODO
-
+function ColorValue(colorId, value) {
+    this.colorId = colorId;
+    this.valu    = value;
 }
 
 module.exports = {
