@@ -102,7 +102,9 @@ Wallet.prototype.getUnspentCoins = function () {
 }
  
 Wallet.prototype.signTx = function (tx) {
-    for (var i = 0; i < tx.ins.length; tx.sign(i, this.privkey), i++);
+    var txb = new bitcoin.TransactionBuilder.fromTransaction(tx);
+    for (var i = 0; i < txb.tx.ins.length; txb.sign(i, this.privkey), i++);
+    tx = txb.build();
     return tx;
 }
 
