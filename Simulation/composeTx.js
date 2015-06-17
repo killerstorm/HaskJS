@@ -78,18 +78,19 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
  
     var uncoloredSum = 0;
     var uncoloredInputs;
+    var change = 0;
+    
     if (uncoloredNeeded > 0) {
-      uncoloredInputs = selectCoins(unspentCoins, function (coin) { return coin.value }, 
-                                        uncoloredNeeded);
-      uncoloredSum        = _.sum(uncoloredInputs, 'value');
-      _.each(uncoloredInputs, function(coin) {  tx.addInput(coin.txid, coin.index); });
-    }
- 
-    var change = uncoloredSum - uncoloredNeeded;
- 
-    if (change > 0) {
-        tx.addOutput(changeAddress, change);
-        coins.push({"index" : index, "value" : change, "coinstate" : change.toString()});
+        uncoloredInputs = selectCoins(unspentCoins, function (coin) { return coin.value }, 
+                                      uncoloredNeeded);
+        uncoloredSum        = _.sum(uncoloredInputs, 'value');
+        _.each(uncoloredInputs, function(coin) {  tx.addInput(coin.txid, coin.index); });
+          change = uncoloredSum - uncoloredNeeded;
+  
+        if (change > 0) {
+            tx.addOutput(changeAddress, change);
+            coins.push({"index" : index, "value" : change, "coinstate" : change.toString()});
+        }
     }
 
     var payload = createPayload (
