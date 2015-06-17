@@ -6,7 +6,7 @@ import qualified Data.Map as Map
 import Debug.Trace
 
 
-topologicalSort :: [Tx a] -> [Tx a]-> [Tx a]                        
+topologicalSort :: (Show a) => [Tx a] -> [Tx a]-> [Tx a]                        
 topologicalSort g tx = tsort tx []        
   where tsort [] r           = r                  -- return sorted list
         tsort (x:xs) visited
@@ -30,9 +30,22 @@ notMissingCS :: WrappedCS cs -> Bool
 notMissingCS MissingCS = False
 notMissingCS _         = True
 
-foldTxGraph :: [a] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
-foldTxGraph g apply = foldl applyTx' Map.empty g 
+--foldTxGraph :: [a] -> (a -> Map.Map k v -> Map.Map k v) -> Map.Map k v
+foldTxGraph g apply =
+  foldl applyTx' Map.empty g 
   where applyTx' acc tx = apply tx acc
 
+--topologicalSort' :: Map.Map k v -> [k] -> (Map.Map k v, [(k, v)])                        
+topologicalSort' g k = tsort k (Map.empty, [])               -- g - transactions map, k - list of keys (txId list)  
+  where
+    tsort [] (visited, sorted)        = (visited, sorted)    -- visited - visited transactions map, sorted - sorted transactions list
+    tsort (x:xs) (visited, sorted)
+          | Map.member x visited || Map.notMember x g        -- if x is visited or x not in graph
+                                    = tsort xs (visited, sorted) 
+          | otherwise               = tsort xs (Map.insert x b visited', (x, b) : sorted') -- tsort rest of keylist, insert current tx in visited map and in sorted list
+                                   where
+                                     b@(ins, _, _)       = g Map.! x
+                                     k                   = map fst ins                -- inputs (txids) of current transaction                  
+                                     (visited', sorted') =  tsort k (visited, sorted) -- sort from current transaction
 
- 
+
