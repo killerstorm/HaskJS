@@ -45,6 +45,20 @@ packToJSON ((txid, index), cs) = toJSStr $
           InvalidCS -> "I"
           NullCS    -> "N"
 
+
+packToJSON' :: (Show cs) => (CoinId, WrappedCS cs, Integer) -> JSString
+packToJSON' ((txid, index), cs, value) = toJSStr $
+  "{" ++
+  "\"txid\" : \""  ++ txid       ++ "\", " ++
+  "\"index\" : " ++ show index ++ ", " ++
+  "\"coinstate\" : \""    ++ coinstate  ++ "\", " ++
+  "\"value\" : " ++ show value ++ "}"
+  where coinstate = case cs of
+          JustCS x  -> show x
+          MissingCS -> "M"
+          InvalidCS -> "I"
+          NullCS    -> "N"
+
 --runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [String]
 runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [JSString]
 runCoinKernelOnGraph xs = return $ map packToJSON $
@@ -52,16 +66,27 @@ runCoinKernelOnGraph xs = return $ map packToJSON $
   where g' = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
         g  = reverse $ topologicalSort g' g'-- full sorted graph
 
+--runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [String]
+_runCoinKernelOnGraph :: (String, [CoinId], TxId, Int) ->  [(String, [CoinId], TxId, Int)] -> IO [JSString]
+_runCoinKernelOnGraph tx xs = return $ map packToJSON $
+                          Map.toList $ foldTxGraph g apply'
+  where g' =  Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
+        t  = getTx' tx
+        g  = reverse $ topologicalSort g' [t] -- full sorted graph
+
+getTx' :: (String, [CoinId], TxId, Int) -> Tx String 
+getTx' (a, b, c, d) = (Tx a b c d)
+
 topSort :: [(String, [CoinId], TxId, Int)] -> IO [(String, [CoinId], TxId, Int)]
 topSort xs = return $  map (\(Tx a b c d) -> (a, b, c, d)) g
   where g' = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
         g  = reverse $ topologicalSort g' g' -- full sorted graph
 
              
-runKernel :: (String, [(CoinId, Integer)], TxId, Int) -> IO [JSString]
-runKernel (payload, inputs, txid, _) = return $ map packToJSON coins
+runKernel :: (String, TxId) ->  [(CoinId, Integer)] -> [Integer] -> IO [JSString]
+runKernel (payload, txid) inputs  outs = return $ map packToJSON' coins
   where outputs      = kernel payload $ map (JustCS . snd) inputs
-        coins        = zip (zip (repeat txid) [0..]) outputs
+        coins        = zip3 (zip (repeat txid) [0..]) outputs outs
                        
                         
 getMuxShape :: String -> IO String
@@ -96,11 +121,9 @@ getTx x =  (Tx c b a d)
       a = fst x
       (b, c, d) = snd x
 
-
-
-
 main = do
   export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
+  export (toJSStr "_runCoinKernelOnGraph") _runCoinKernelOnGraph
   export (toJSStr "runCoinKernelOn") runCoinKernelOn
   export (toJSStr "topSort") topSort
   export (toJSStr "runKernel") runKernel
