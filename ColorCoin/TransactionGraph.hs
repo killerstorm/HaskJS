@@ -17,7 +17,7 @@ topologicalSort g tx = tsort tx []
 
 -- ???? applyTx :: (ColorTx txPayload -> [coinState] -> [coinState]) ->
 --                  Tx txPayload -> CoinStateMap coinState -> CoinStateMap coinState
-applyTx  kernel tx csMap   = Map.union csMap (Map.fromList validOutputCoins)
+applyTx  kernel tx csMap   = csmap
   where ins                = map (\x -> case Map.lookup x csMap of
                                      Nothing        -> MissingCS
                                      Just x         -> x) (inputs tx)
@@ -25,6 +25,7 @@ applyTx  kernel tx csMap   = Map.union csMap (Map.fromList validOutputCoins)
         coinIds            = zip (repeat $ txId tx) [0..]
         outputCoins        = zip coinIds outputs
         validOutputCoins   = filter (notMissingCS . snd) outputCoins
+        csmap              = Map.union csMap (Map.fromList validOutputCoins)
 
 notMissingCS :: WrappedCS cs -> Bool
 notMissingCS MissingCS = False
