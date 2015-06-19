@@ -1,6 +1,8 @@
 var _ = require('lodash');
 var bitcoin = require('bitcoinjs-lib');
 var kernel = require('./kernel.js');
+var base58 = require('base58-native');
+var sha256 = bitcoin.crypto.sha256;
 
 const coinbaseTxId = '0000000000000000000000000000000000000000000000000000000000000000';
 const coinbaseOutIndex = 0;
@@ -65,15 +67,23 @@ Simulation.prototype.getUnspentCoins = function (addr) {
 }
 
 function Wallet(simulation, name) {
-    this.name = name;
-    this.colored 
+    this.name = name; 
     this.simulation = simulation;
-    var key = bitcoin.ECKey.makeRandom();
-    this.privkey = key;
-    this.pubkey  = key.pub;
-    this.address = key.pub.getAddress().toString();
+    this.key     = bitcoin.crypto.sha256(name);
+    this.wif     = this.getWIF();
+    this.privkey = bitcoin.ECKey.fromWIF(this.wif)
+    this.pubkey  = this.privkey.pub;
+    this.address = this.pubkey.getAddress().toString();
     this.coins = [];
 }
+
+Wallet.prototype.getWIF = function() {
+    var extkey = new Buffer.concat([new Buffer('80', 'hex'), this.key]);
+    var checksum = (sha256(sha256(extkey))).slice(0, 4);
+    var wif      = base58.encode(new Buffer.concat([extkey, checksum]));
+    return wif;
+}
+    
  
 Wallet.prototype.issueCoin = function (value) {
     var coloredTx = this.simulation.kernel.composeIssueTx([{'address' : this.getAddress(), 'value' : value}]);
