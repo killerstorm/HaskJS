@@ -4,27 +4,16 @@ var  crypto = require('crypto');
 var  Transaction = bc.Transaction;
 var _ = require('lodash');
 
-<<<<<<< HEAD
-function get_inputs(transaction) {
-    return transaction.ins.map(function (txin) {
-        return [buffertools.reverse(txin.hash).toString('hex'), txin.index]  });
-=======
 function getInputs(transaction) {
     return transaction.ins.map(function (txin) {
         var txinhash = new Buffer(txin.hash);
         return [buffertools.reverse(txinhash).toString('hex'), txin.index]  });
->>>>>>> develop
 }
 
 function createKernelTx(t) {  //Tx for runCoinKernel
     var tx = [];
-<<<<<<< HEAD
-    tx.push(get_payload(t));
-    tx.push(get_inputs(t));
-=======
     tx.push(getPayload(t));
     tx.push(getInputs(t));
->>>>>>> develop
     tx.push(t.getId());
     tx.push(t.outs.length - 1);
 
@@ -37,11 +26,7 @@ function maybe_get_op_return(script) {
     } else { return null; }
 }
 
-<<<<<<< HEAD
-function get_payload(transaction) {
-=======
 function getPayload(transaction) {
->>>>>>> develop
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
       if (op_return) {
@@ -52,11 +37,7 @@ function getPayload(transaction) {
 }
 
 
-<<<<<<< HEAD
-module.exports = createKernelTx
-=======
 module.exports = {
     createKernelTx : createKernelTx,
     getPayload     : getPayload
 }
->>>>>>> develop
