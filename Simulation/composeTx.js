@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 
->>>>>>> develop
 const _           = require('lodash');
 const bitcoin     = require('bitcoinjs-lib');
 const buffertools = require('buffertools');
@@ -43,11 +40,7 @@ function composeColoredSendTx (wallet, targets, changeAddress) {
 
 
     wallet.coins = _.difference(wallet.coins, coins);
-<<<<<<< HEAD
-    if (change) {
-=======
     if (change > 0) {
->>>>>>> develop
         targets.push({address: changeAddress, value: change});
     }
     
@@ -64,10 +57,6 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
     var unspentCoins = uncoloredWallet.getUnspentCoins();
     var changeAddress = uncoloredWallet.getAddress();
 
-<<<<<<< HEAD
-    var coins = [];
-=======
->>>>>>> develop
     var index = 0;
     unspentCoins = _.reject(unspentCoins, 'cv')
  
@@ -78,10 +67,6 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
 
     _.each(coloredTargets, function(target) {
         tx.addOutput(target.address, target.value);
-<<<<<<< HEAD
-        coins.push({"index" : index, "value" : target.value, "coinstate" : target.value.toString()});
-=======
->>>>>>> develop
         index++;
     });
  
@@ -89,15 +74,9 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
         tx.addInput(coin.txid, coin.index);
         uncoloredNeeded -= coin.value;
     });
-<<<<<<< HEAD
- 
-    var uncoloredSum = 0;
-    var uncoloredInputs;
-=======
 
     var uncoloredSum = 0;
     var uncoloredInputs = [];
->>>>>>> develop
     var change = 0;
     
     if (uncoloredNeeded > 0) {
@@ -109,39 +88,23 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
   
         if (change > 0) {
             tx.addOutput(changeAddress, change);
-<<<<<<< HEAD
-            coins.push({"index" : index, "value" : change, "coinstate" : change.toString()});
-        }
-    }
-
-=======
         }
     }
 
     var outValues = _.pluck(coloredTargets, 'value').concat(change == 0 ? [] : [change])
 
->>>>>>> develop
     var payload = createPayload (
         coloredInputs === [] ? coloredInputs.length + uncoloredInputs.length : 0,
         change ? coloredTargets.length + 1 : coloredTargets.length,
         coloredInputs.length ? 0 : 1,
-<<<<<<< HEAD
-        _.pluck(coloredTargets, 'value').concat(change == 0 ? [] : [change])
-=======
         outValues
->>>>>>> develop
     );
     
     tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0);
     
     uncoloredWallet.coins = _.difference(uncoloredWallet.coins, uncoloredInputs);
-<<<<<<< HEAD
-    
-    return {'tx' : tx, 'coins' : coins};  
-=======
 
     return {'tx' : tx, 'outValues' : outValues, 'inputs' : coloredInputs.concat(uncoloredInputs)};  
->>>>>>> develop
 }
 
 module.exports = {
