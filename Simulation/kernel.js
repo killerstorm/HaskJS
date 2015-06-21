@@ -43,9 +43,9 @@ function Color() {
 }
 
 
-function ColorValue(colorId, value) {
+function CoinValue(colorId, value) {
     this.colorId = colorId;
-    this.valu    = value;
+    this.value    = value;
 }
 
 module.exports = {
