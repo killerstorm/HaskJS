@@ -5,51 +5,51 @@ var _ = require('lodash');
 
 
 function Kernel(simulation) {
-    this.simulation = simulation;
+  this.simulation = simulation;
 }
 
 Kernel.prototype.runKernel = function(tx, ins, outs) {
-    var ktx = [kerneltx.getPayload(tx), tx.getId()];
-    ins = _.map(ins, function(n) {
-        var t = [];
-        t[0] = [];
-        t[0].push(n.txid);
-        t[0].push(n.index);
-        t.push(n.value);
-        return t;
-    });
-    var coins = _.map(haste.runKernel(ktx, ins, outs), JSON.parse);
-    return coins;
+  var ktx = [kerneltx.getPayload(tx), tx.getId()];
+  ins = _.map(ins, function(n) {
+    var t = [];
+    t[0] = [];
+    t[0].push(n.txid);
+    t[0].push(n.index);
+    t.push(n.value);
+    return t;
+  });
+  var coins = _.map(haste.runKernel(ktx, ins, outs), JSON.parse);
+  return coins;
 }
 
 Kernel.prototype.composeIssueTx = function (targets) {
-    var tx = composetx.composeColoredIssueTx (targets);
-    return tx;
+  var tx = composetx.composeColoredIssueTx (targets);
+  return tx;
 }
 
 Kernel.prototype.composeSendTx = function (unspent, targets, changeAddress) {
-    var tx = composetx.composeColoredSendTx (unspent, targets, changeAddress);
-    return tx;
+  var tx = composetx.composeColoredSendTx (unspent, targets, changeAddress);
+  return tx;
 }
 
 Kernel.prototype.composeBitcoinTx = function (tx, uncoloredWallet) {
-    var tx = composetx.composeBitcoinTx (tx, uncoloredWallet);
-    return tx;
+  var tx = composetx.composeBitcoinTx (tx, uncoloredWallet);
+  return tx;
 }
         
 function Color() {
-    throw new Error ("Color not implemented");
+  throw new Error ("Color not implemented");
     //TODO
 }
 
 
 function CoinValue(colorId, value) {
-    this.colorId = colorId;
-    this.value    = value;
+  this.colorId = colorId;
+  this.value    = value;
 }
 
 module.exports = {
-    Kernel     : Kernel,
-    Color      : Color,
-    ColorValue : ColorValue
+  Kernel     : Kernel,
+  Color      : Color,
+  CoinValue  : CoinValue
 }
