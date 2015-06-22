@@ -4,8 +4,29 @@ var kernel = require('./kernel.js');
 var base58 = require('base58-native');
 var sha256 = bitcoin.crypto.sha256;
 
-const coinbaseTxId = '0000000000000000000000000000000000000000000000000000000000000000';
-const coinbaseOutIndex = 0;
+/**
+ * CoinbaseTXID
+ * @const {String}
+ */
+const coinbaseTxId = _.repeat('0', 64);
+
+/**
+ * CoinbaseOutIndex
+ * @const {Number}
+ */
+const coinbaseOutIndex = 0xffffffff;
+
+/** 
+ * 0x80 byte
+ * @const 
+ */
+const x80 = new Buffer('80', 'hex');
+
+/**
+ * 0x01 byte
+ * @const
+ */
+const x01 = new Buffer('01', 'hex');
 
 function Simulation(name) {
     this.name = name || 'test';
