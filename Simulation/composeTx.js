@@ -3,8 +3,15 @@ const bitcoin     = require('bitcoinjs-lib');
 const buffertools = require('buffertools');
 const Transaction = bitcoin.Transaction;
 
-var dustThreshold = 546;
+/**
+ * dustThreshold
+ * @const {number}
+ */
+const dustThreshold = 546;
 
+/*
+ * @return {string} payload
+ */
 function createPayload (ins, outs, opid, outValues) {
   return '(' +
     JSON.stringify(_.range(ins)) + ', ' +
@@ -51,7 +58,7 @@ function composeColoredIssueTx (targets) {
   return {inputs: [], targets: targets};
 }
  
-function composeBitcoinTx (coloredTx, uncoloredWallet) {
+ function composeBitcoinTx (coloredTx, uncoloredWallet) {
   var tx = new Transaction();
 
   var unspentCoins = uncoloredWallet.getUnspentCoins();

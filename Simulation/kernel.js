@@ -33,8 +33,8 @@ Kernel.prototype.composeSendTx = function (unspent, targets, changeAddress) {
 }
 
 Kernel.prototype.composeBitcoinTx = function (tx, uncoloredWallet) {
-  var tx = composetx.composeBitcoinTx (tx, uncoloredWallet);
-  return tx;
+  var composedTx = composetx.composeBitcoinTx (tx, uncoloredWallet);
+  return composedTx;
 }
         
 function Color() {
@@ -43,13 +43,15 @@ function Color() {
 }
 
 
-function CoinValue(colorId, value) {
+function ColorValue(colorId, value) {
   this.colorId = colorId;
   this.value    = value;
 }
 
+function 
+
 module.exports = {
   Kernel     : Kernel,
   Color      : Color,
-  CoinValue  : CoinValue
+  ColorValue  : ColorValue
 }
