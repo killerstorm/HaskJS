@@ -46,12 +46,10 @@ function Color() {
 function ColorValue(colorId, value) {
   this.colorId = colorId;
   this.value    = value;
-}
-
-function 
+} 
 
 module.exports = {
-  Kernel     : Kernel,
-  Color      : Color,
+  Kernel      : Kernel,
+  Color       : Color,
   ColorValue  : ColorValue
 }
