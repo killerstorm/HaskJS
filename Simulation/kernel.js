@@ -1,6 +1,6 @@
 var composetx = require('./composeTx.js');
-var kerneltx = require('../ColorCoin/src/kerneltx.js');
-var haste = require('../ColorCoin/main.js').getHaste();
+var kerneltx = require('../src/kerneltx.js');
+var haste = require('../main.js').getHaste();
 var _ = require('lodash');
 
 
@@ -18,7 +18,8 @@ Kernel.prototype.runKernel = function(tx, ins, outs) {
     t.push(n.value);
     return t;
   });
-  var coins = _.map(haste.runKernel(ktx, ins, outs), JSON.parse);
+
+    var coins = _.map(haste.runKernel(ktx, ins, outs), JSON.parse);
   return coins;
 }
 

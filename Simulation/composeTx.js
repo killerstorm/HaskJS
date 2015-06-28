@@ -9,7 +9,7 @@ const Transaction = bitcoin.Transaction;
  */
 const dustThreshold = 546;
 
-/*
+/**
  * @return {string} payload
  */
 function createPayload (ins, outs, opid, outValues) {

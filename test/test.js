@@ -1,5 +1,5 @@
-var Simulation = require('../simulation.js')
-var kernel     = require('../kernel.js')
+var Simulation = require('../Simulation/simulation.js')
+var kernel     = require('../Simulation/kernel.js')
 var bitcoin    = require('bitcoinjs-lib')
 var _          = require('lodash')
 var expect     = require('chai').expect

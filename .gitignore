@@ -1,7 +1,6 @@
 # Emacs temporary files
 /#*#
 /*~
-<<<<<<< HEAD
-=======
 /.*~
->>>>>>> develop
+/.hi
+/.o
