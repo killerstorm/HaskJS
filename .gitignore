@@ -1,7 +1,8 @@
-# Emacs temporary files
 /#*#
 /*~
 /.*~
 /*.hi
 /*.o
 main/
+/main.js
+node_modules/
