@@ -196,6 +196,22 @@ Wallet.prototype.issueCoin = function (value) {
   )
 }
 
+Wallet.prototype.getcoin = function (amount) {
+  var wallet = this
+  sendtoaddress (this.getAddress(), amount)
+  .then(function (txid) {
+    var coin = {
+      txid : txid
+    , index : 0
+    , coinstate : (amount * 100000000).toString()
+    , value : amount * 100000000
+    }
+
+    console.log('coin = ', coin)
+    wallet.coins.push(coin)
+    getrawtransaction (txid, wallet.simulation)
+  })
+}
 
 /**
  * Send
