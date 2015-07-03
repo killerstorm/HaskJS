@@ -90,6 +90,14 @@ function getrawtransaction (txid, sim) {
  * ============================================================
  */
 
+function init (simulation) {
+  generate (1)
+  .then( function ()  { return listtransactions() })
+  .each( function (t) { return getrawtransaction (t.txid, simulation) }) 
+  .then( function ()  {
+    simulation.isInitialized = true
+  })
+}
 
 /**
  * Simulation
