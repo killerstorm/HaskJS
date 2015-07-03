@@ -86,6 +86,29 @@ function getrawtransaction (txid, sim) {
   })
 }
 
+function decoderawtransaction (rawtx) {
+  return new Promise (function (resolve, reject) {
+    client.decodeRawTransaction (rawtx, function (err, tx) {
+      if (err)
+        reject (err)
+      else 
+        resolve (tx)
+    })
+  })
+}
+
+function gettransaction (txid) {
+  return new Promise (function (resolve, reject) {
+    client.getTransaction (txid, function (err, tx) {
+      if (err)
+        reject (err)
+      else {
+        resolve(tx)
+      }
+    })
+  })
+}
+
 /**
  * ============================================================
  */
