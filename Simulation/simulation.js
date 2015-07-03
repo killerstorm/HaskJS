@@ -129,25 +129,25 @@ Simulation.prototype.addCoins = function (coins) {
 };
 
 Simulation.prototype.getUnspentCoins = function (addr) {
-    var unspent = [];
-    var sim = this;
-    _.map(sim.transactions, function (tx) {
-        var index = 0;
-        _.each(tx.outs, function (out) {
-            if (out.script.chunks.length != 2 &&
-                bitcoin.Address.fromOutputScript(out.script).toString() == addr) {
-                _.find(sim.coins, function (c) {
-                    return (c.txid == tx.getId() &&
-                        c.index == index &&
-                        unspent.push(c));
-                });
-            }
-            index++;
-        });
-    });
-    this.coins = _.difference(this.coins, unspent);
-    return unspent;
-};
+  var unspent = []
+  var sim = this
+  _.map(sim.transactions, function (tx) {
+    var index = 0
+    _.each(tx.outs, function (out) {
+      if (out.script.chunks.length != 2 &&
+          bitcoin.Address.fromOutputScript(out.script, network).toString() == addr) {
+        _.find(sim.coins, function (c) {
+                return (c.txid == tx.getId() &&
+                        c.index == index     &&
+                        unspent.push(c))
+            })
+        }
+      index++
+    })
+  })
+  this.coins = _.difference(this.coins, unspent)
+  return unspent
+}
 
 /**
  * Wallet
