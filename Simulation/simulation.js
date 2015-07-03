@@ -169,31 +169,33 @@ function Wallet(simulation, name) {
  * @return {string} WIF
  */
 Wallet.prototype.getWIF = function () {
-    var extkey = new Buffer.concat([x80, this.key, x01]);
-    var checksum = (sha256(sha256(extkey))).slice(0, 4);
-    var wif = base58.encode(new Buffer.concat([extkey, checksum]));
-    return wif;
-};
+  var extkey   = new Buffer.concat([x80, this.key, x01])
+  var checksum = (sha256(sha256(extkey))).slice(0, 4)
+  var wif      = base58.encode(new Buffer.concat([extkey, checksum]))
+  
+  return wif
+}
 
 /**
  * Issue coin
  *
  */
 Wallet.prototype.issueCoin = function (value) {
-    var coloredTx = this.simulation.kernel.composeIssueTx(
-      [{ 'address': this.getAddress(), 'value': value }]
-    );
-    
-    var txio = this.simulation.kernel.composeBitcoinTx(
-      coloredTx, this.simulation.wallets['uncolored']
-    );
-    
-    var tx = this.signTx(txio.tx);
-    this.simulation.addTx(tx);
-    this.simulation.addCoins(
-      this.simulation.kernel.runKernel(tx, txio.inputs, txio.outValues)
-    );
-};
+  var coloredTx = this.simulation.kernel.composeIssueTx(
+    [{ 'address': this.getAddress(), 'value': value }]
+  )
+  
+  var txio = this.simulation.kernel.composeBitcoinTx(
+    coloredTx, this
+  )
+  
+  var tx = this.signTx(txio.tx)
+  this.simulation.addTx(tx)
+  this.simulation.addCoins(
+    this.simulation.kernel.runKernel(tx, txio.inputs, txio.outValues)
+  )
+}
+
 
 /**
  * Send
