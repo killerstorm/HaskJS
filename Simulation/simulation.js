@@ -112,23 +112,6 @@ function Simulation(name) {
   this.coins         = []
 }
 
-Simulation.prototype.init = function () {
-    var coinbaseTx = new bitcoin.Transaction();
-    coinbaseTx.addInput(coinbaseTxId, coinbaseOutIndex);
-    coinbaseTx.addOutput(this.wallets['uncolored'].getAddress(), 2500000000);
-    coinbaseTx.addOutput(
-      bitcoin.scripts.nullDataOutput(new Buffer('([] [0] 1) 1 [2500000000]')), 0);
-    this.addTx(coinbaseTx);
-    this.addCoins([
-        {
-            "txid": coinbaseTx.getId(),
-            "index": 0,
-            "coinstate": "2500000000",
-            "value": 2500000000
-        }
-    ]);
-};
-
 /**
  * @return {Wallet}
  */
