@@ -119,15 +119,6 @@ function gettransaction (txid) {
  * ============================================================
  */
 
-function init (simulation) {
-  generate (1)
-  .then( function ()  { return listtransactions() })
-  .each( function (t) { return getrawtransaction (t.txid, simulation) }) 
-  .then( function ()  {
-    simulation.isInitialized = true
-  })
-}
-
 /**
  * Simulation
  * @interface
@@ -139,6 +130,27 @@ function Simulation(name) {
   this.transactions  = []
   this.wallets       = {}
   this.coins         = []
+}
+
+/**
+ * Simulation initialize function
+ */
+Simulation.prototype.init = function () {
+  if (this.isInitialized)
+    return
+
+  var sim = this
+  
+  generate (1)
+  .then(function ()  {
+    return listtransactions()
+  })
+  .each(function (t) {
+    return getrawtransaction (t.txid, sim)
+  }) 
+  .then(function ()  {
+    sim.isInitialized = true
+  })
 }
 
 /**
