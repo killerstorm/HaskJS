@@ -1,8 +1,21 @@
-var _ = require('lodash');
-var bitcoin = require('bitcoinjs-lib');
-var kernel = require('./kernel.js');
-var base58 = require('base58-native');
-var sha256 = bitcoin.crypto.sha256;
+var _           = require('lodash')
+var bitcoin     = require('bitcoinjs-lib')
+var kernel      = require('./kernel.js')
+var base58      = require('base58-native')
+var composetx   = require('./composeTx.js')
+var bc          = require('bitcoin')
+var Promise     = require('bluebird')
+
+var sha256      = bitcoin.crypto.sha256
+var Transaction = bitcoin.Transaction
+var client      = new bc.Client({
+  host : 'localhost'
+, port : 8332
+, user : 'user'
+, pass : 'password'
+})
+
+var network = bitcoin.networks.testnet
 
 /**
  * CoinbaseTXID
