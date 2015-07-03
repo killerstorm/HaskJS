@@ -18,16 +18,22 @@ var client      = new bc.Client({
 var network = bitcoin.networks.testnet
 
 /**
+ * BTC
+ * @const
+ */
+const BTC = 100000000
+
+/**
  * 0x80 byte
  * @const
  */
-var x80 = new Buffer('80', 'hex');
+const x80 = new Buffer('80', 'hex')
 
 /**
  * 0x01 byte
  * @const
  */
-var x01 = new Buffer('01', 'hex');
+const x01 = new Buffer('01', 'hex')
 
 /**
  * ============================================================
