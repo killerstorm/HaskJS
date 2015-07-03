@@ -237,20 +237,41 @@ Wallet.prototype.issueCoin = function (value) {
   )
 }
 
-Wallet.prototype.getcoin = function (amount) {
-  var wallet = this
+/**
+ * Get bitcoins
+ */
+Wallet.prototype.getcoins = function (amount) {
+  var wallet  = this
+  var address = this.getAddress()
+  var id      = null
   sendtoaddress (this.getAddress(), amount)
   .then(function (txid) {
-    var coin = {
-      txid : txid
-    , index : 0
-    , coinstate : (amount * 100000000).toString()
-    , value : amount * 100000000
-    }
-
-    console.log('coin = ', coin)
-    wallet.coins.push(coin)
-    getrawtransaction (txid, wallet.simulation)
+    id = txid
+    return getrawtransaction (txid, wallet.simulation)
+  })
+  .then(function (rawtx) {
+    return decoderawtransaction (rawtx)
+  })
+  .then(function (tx) {
+    return new Promise (function (resolve) {
+      resolve (tx.vout)
+    })
+  })
+  .each(function (out) {
+    return new Promise (function (resolve) {
+      if (out.scriptPubKey.addresses[0] === address) {
+        wallet.coins.push({
+          txid      : id
+        , index     : out.n
+        , coinstate : (out.value * BTC).toString()
+        , value     : out.value * BTC
+        })
+      }
+      resolve(out)
+    })
+  })
+  .then(function (tx) {
+    console.log("got coins")
   })
 }
 
