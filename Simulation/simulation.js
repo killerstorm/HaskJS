@@ -18,18 +18,6 @@ var client      = new bc.Client({
 var network = bitcoin.networks.testnet
 
 /**
- * CoinbaseTXID
- * @const {string}
- */
-var coinbaseTxId = _.repeat('0', 64);
-
-/**
- * CoinbaseOutIndex
- * @const {number}
- */
-var coinbaseOutIndex = 0xffffffff;
-
-/**
  * 0x80 byte
  * @const
  */
