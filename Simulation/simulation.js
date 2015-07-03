@@ -30,6 +30,68 @@ var x80 = new Buffer('80', 'hex');
 var x01 = new Buffer('01', 'hex');
 
 /**
+ * ============================================================
+ * Promisified RPC functions
+ * 
+ * ============================================================
+ */
+function generate(n) {
+  n = (n === undefined) ? 1 : n
+  
+  return new Promise (function (resolve, reject) {
+    client.setGenerate (true, n, function (err, res) {
+      if (err)
+        reject (err)
+      else {
+        resolve (n)
+      }
+    })
+  })
+}
+
+function sendtoaddress (address, amount) {
+  return new Promise (function (resolve, reject) {
+    client.sendToAddress (address, amount, function (err, txid) {
+      if (err)
+        reject (err)
+      else
+        resolve (txid)
+    })
+  })
+}
+
+function listtransactions (name) {
+  name = (name === undefined) ? "" : name
+  
+  return new Promise (function (resolve, reject) {
+    client.listTransactions (name, function (err, res) {
+      if (err)
+        reject (err)
+      else 
+        resolve (res)
+    })
+  })
+}
+
+function getrawtransaction (txid, sim) {
+  return new Promise (function (resolve, reject) {
+    client.getRawTransaction (txid, function (err, txHex) {
+      if (err)
+        reject (err)
+      else {
+        sim.transactions.push(Transaction.fromHex(txHex)) 
+        resolve(txHex)
+      }
+    })
+  })
+}
+
+/**
+ * ============================================================
+ */
+
+
+/**
  * Simulation
  * @interface
 */
