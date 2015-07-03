@@ -104,13 +104,12 @@ function init (simulation) {
  * @interface
 */
 function Simulation(name) {
-    this.name = name || 'test';
-    this.kernel = new kernel.Kernel(this);
-    this.transactions = [];
-    this.wallets = {};
-    this.coins = [];
-    this.wallet('uncolored');
-    this.init();
+  this.isInitialized = false
+  this.name          = name || 'test'
+  this.kernel        = new kernel.Kernel(this)
+  this.transactions  = []
+  this.wallets       = {}
+  this.coins         = []
 }
 
 Simulation.prototype.init = function () {
