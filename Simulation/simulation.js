@@ -282,23 +282,22 @@ Wallet.prototype.getcoins = function (amount) {
  * Send
  */
 Wallet.prototype.send = function (value, target) {
-    var coloredTx = this.simulation.kernel.composeSendTx(
-      this,
-      [{ 'address': target.getAddress(), 'value': value }],
-      this.getAddress()
-    );
-    
-    //txio => {tx, inputs, outValues}
-    var txio = this.simulation.kernel.composeBitcoinTx(
-      coloredTx, this.simulation.wallets['uncolored']
-    );
-    
-    var tx = this.signTx(txio.tx);
-    this.simulation.addTx(tx);
-    this.simulation.addCoins(
-      this.simulation.kernel.runKernel(tx, txio.inputs, txio.outValues)
-    );
-};
+  var coloredTx = this.simulation.kernel.composeSendTx(
+    this,
+    [{ 'address': target.getAddress(), 'value': value }],
+    this.getAddress()
+  )
+  
+  var txio = this.simulation.kernel.composeBitcoinTx(
+    coloredTx, this.simulation.wallets['uncolored']
+  )
+  
+  var tx = this.signTx(txio.tx)
+  this.simulation.addTx(tx)
+  this.simulation.addCoins(
+    this.simulation.kernel.runKernel(tx, txio.inputs, txio.outValues)
+  )
+}
 
 Wallet.prototype.getUnspentCoins = function () {
     this.coins = this.coins.concat(
