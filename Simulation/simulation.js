@@ -10,7 +10,7 @@ var sha256      = bitcoin.crypto.sha256
 var Transaction = bitcoin.Transaction
 var client      = new bc.Client({
   host : 'localhost'
-, port : 8332
+, port : 18332
 , user : 'user'
 , pass : 'password'
 })
@@ -136,11 +136,13 @@ function Simulation(name) {
  * Simulation initialize function
  */
 Simulation.prototype.init = function () {
-  if (this.isInitialized)
+  if (this.isInitialized) {
+    console.log("simulation already initialized!")
     return
+  }
 
   var sim = this
-  
+ 
   generate (1)
   .then(function ()  {
     return listtransactions()
@@ -150,6 +152,7 @@ Simulation.prototype.init = function () {
   }) 
   .then(function ()  {
     sim.isInitialized = true
+    console.log ('initialization successfull!')
   })
 }
 
