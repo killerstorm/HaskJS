@@ -300,37 +300,37 @@ Wallet.prototype.send = function (value, target) {
 }
 
 Wallet.prototype.getUnspentCoins = function () {
-    this.coins = this.coins.concat(
-      this.simulation.getUnspentCoins(this.address)
-    );
-    
-    return this.coins;
-};
+  this.coins = this.coins.concat(
+    this.simulation.getUnspentCoins(this.address)
+  )
+  
+  return this.coins
+}
 
 /**
  * Sign transaction
  * @return {bitcoin.Transaction}
  */
 Wallet.prototype.signTx = function (tx) {
-    var txb = new bitcoin.TransactionBuilder.fromTransaction(tx);
-    for (var i = 0; i < txb.tx.ins.length; txb.sign(i, this.privkey), i++) { };
-    tx = txb.build();
-    return tx;
-};
+  var txb = new bitcoin.TransactionBuilder.fromTransaction(tx)
+  for (var i = 0; i < txb.tx.ins.length; txb.sign(i, this.privkey), i++) { }
+  tx = txb.build()
+  return tx
+}
 
 /**
  * @return {number} balance
  */
 Wallet.prototype.getBalance = function () {
-    this.getUnspentCoins();
-    return _.sum(this.coins, "value");
+    this.getUnspentCoins()
+    return _.sum(this.coins, "value")
 };
 
 /**
  * @return {string} address
  */
 Wallet.prototype.getAddress = function () {
-    return this.address;
+    return this.address
 };
 
-module.exports = Simulation;
+module.exports = Simulation
