@@ -198,14 +198,14 @@ Simulation.prototype.getUnspentCoins = function (addr) {
  * @interface
  */
 function Wallet(simulation, name) {
-    this.name = name;
-    this.simulation = simulation;
-    this.key = bitcoin.crypto.sha256(name);
-    this.wif = this.getWIF();
-    this.privkey = bitcoin.ECKey.fromWIF(this.wif);
-    this.pubkey = this.privkey.pub;
-    this.address = this.pubkey.getAddress().toString();
-    this.coins = [];
+  this.name       = name || 'test'
+  this.simulation = simulation
+  this.key        = bitcoin.crypto.sha256(name)
+  this.wif        = this.getWIF()
+  this.privkey    = bitcoin.ECKey.fromWIF(this.wif)
+  this.pubkey     = this.privkey.pub
+  this.address    = this.pubkey.getAddress(network).toString()
+  this.coins      = []
 }
 
 /**
