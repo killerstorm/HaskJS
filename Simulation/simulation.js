@@ -121,6 +121,17 @@ function gettransaction (txid) {
   })
 }
 
+function sendrawtransaction (rawTx) {
+  return new Promise (function (resolve, reject) {
+    client.sendRawTransaction (rawTx, function (err, tx) {
+      if (err)
+        reject (err)
+      else
+        resolve (tx)
+    })
+  })
+}
+
 /**
  * ============================================================
  */
