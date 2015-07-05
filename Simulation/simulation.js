@@ -141,36 +141,11 @@ function sendrawtransaction (rawTx) {
  * @interface
 */
 function Simulation(name) {
-  this.isInitialized = false
   this.name          = name || 'test'
   this.kernel        = new kernel.Kernel(this)
   this.transactions  = []
   this.wallets       = {}
   this.coins         = []
-}
-
-/**
- * Simulation initialize function
- */
-Simulation.prototype.init = function () {
-  if (this.isInitialized) {
-    console.log("simulation already initialized!")
-    return
-  }
-
-  var sim = this
- 
-  generate (1)
-  .then(function ()  {
-    return listtransactions()
-  })
-  .each(function (t) {
-    return getrawtransaction (t.txid, sim)
-  }) 
-  .then(function ()  {
-    sim.isInitialized = true
-    console.log ('initialization successfull!')
-  })
 }
 
 /**
