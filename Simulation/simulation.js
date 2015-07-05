@@ -217,6 +217,8 @@ Wallet.prototype.getWIF = function () {
  *
  */
 Wallet.prototype.issueCoin = function (value) {
+  const sim = this.simulation
+  
   var coloredTx = this.simulation.kernel.composeIssueTx(
     [{ 'address': this.getAddress(), 'value': value }]
   )
@@ -226,10 +228,17 @@ Wallet.prototype.issueCoin = function (value) {
   )
   
   var tx = this.signTx(txio.tx)
-  this.simulation.addTx(tx)
-  this.simulation.addCoins(
-    this.simulation.kernel.runKernel(tx, txio.inputs, txio.outValues)
-  )
+  sendrawtransaction (tx.toHex())
+  .then (function (txid) {
+    console.log('Coin issued successfully! txid: ', txid)
+    sim.addTx(tx)   
+    sim.addCoins(
+      sim.kernel.runKernel(tx, txio.inputs, txio.outValues)
+    )
+  })
+  .error (function (e) {
+    console.log('Error!', e)
+  })
 }
 
 /**
