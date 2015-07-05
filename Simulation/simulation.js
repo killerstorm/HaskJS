@@ -24,6 +24,12 @@ var network = bitcoin.networks.testnet
 const BTC = 100000000
 
 /**
+ * SAT
+ * @const
+ */
+const SAT = 1e-8
+
+/**
  * 0x80 byte
  * @const
  */
