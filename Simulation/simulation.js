@@ -248,6 +248,7 @@ Wallet.prototype.getcoins = function (amount) {
   var wallet  = this
   var address = this.getAddress()
   var id      = null
+  
   sendtoaddress (this.getAddress(), amount)
   .then(function (txid) {
     id = txid
