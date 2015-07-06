@@ -191,7 +191,6 @@ Simulation.prototype.getUnspentCoins = function (addr) {
   return unspent
 }
 
-
 /**
  * Wallet
  * @interface
@@ -254,39 +253,39 @@ Wallet.prototype.issueCoin = function (value) {
 /**
  * Get bitcoins
  */
-Wallet.prototype.getcoins = function (amount) {
+Wallet.prototype.getCoins = function () {
   var wallet  = this
   var address = this.getAddress()
   var id      = null
   
-  sendtoaddress (this.getAddress(), amount)
+  sendtoaddress (this.getAddress(), AMOUNT)
   .then(function (txid) {
     id = txid
     return getrawtransaction (txid, wallet.simulation)
   })
-  .then(function (rawtx) {
-    return decoderawtransaction (rawtx)
-  })
-  .then(function (tx) {
+  .then(function (txHex) {
     return new Promise (function (resolve) {
-      resolve (tx.vout)
+      resolve (bitcoin.Transaction.fromHex(txHex).outs)
     })
   })
-  .each(function (out) {
+  .then(function (outs) {
     return new Promise (function (resolve) {
-      if (out.scriptPubKey.addresses[0] === address) {
+      for (var i = 0; i < outs.length; i++) { 
+        if (outs[i].script.chunks.length != 2 &&
+            getOutputAddress (outs[i].script) === address) {
         wallet.coins.push({
           txid      : id
-        , index     : out.n
-        , coinstate : (out.value * BTC).toString()
-        , value     : out.value * BTC
+        , index     : i
+        , coinstate : (outs[i].value).toString()
+        , value     : outs[i].value
         })
+        }
+      resolve(true)
       }
-      resolve(out)
     })
   })
-  .then(function (tx) {
-    console.log("got coins")
+  .then(function (b) {
+    console.log('got ', AMOUNT * BTC, ' satoshi')
   })
 }
 
