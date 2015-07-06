@@ -30,6 +30,12 @@ const BTC = 100000000
 const SAT = 1e-8
 
 /**
+ * AMOUNT
+ * @const
+ */
+const AMOUNT = 10
+
+/**
  * 0x80 byte
  * @const
  */
