@@ -1,355 +1,143 @@
-var _           = require('lodash')
-var bitcoin     = require('bitcoinjs-lib')
-var kernel      = require('./kernel.js')
-var base58      = require('base58-native')
-var composetx   = require('./composeTx.js')
-var bc          = require('bitcoin')
-var Promise     = require('bluebird')
-
-var sha256      = bitcoin.crypto.sha256
-var Transaction = bitcoin.Transaction
-var client      = new bc.Client({
-  host : 'localhost'
-, port : 18332
-, user : 'user'
-, pass : 'password'
-})
-
-var network = bitcoin.networks.testnet
+const _           = require('lodash');
+const bitcoin     = require('bitcoinjs-lib');
+const buffertools = require('buffertools');
+const Transaction = bitcoin.Transaction;
 
 /**
- * BTC
- * @const
+ * dustThreshold
+ * @const {number}
  */
-const BTC = 100000000
+const dustThreshold = 546
 
 /**
- * SAT
- * @const
+ * @return {string} payload
  */
-const SAT = 1e-8
-
-/**
- * AMOUNT
- * @const
- */
-const AMOUNT = 10
-
-/**
- * 0x80 byte
- * @const
- */
-const x80 = new Buffer('80', 'hex')
-
-/**
- * 0x01 byte
- * @const
- */
-const x01 = new Buffer('01', 'hex')
-
-/**
- * ============================================================
- * Promisified RPC functions
- * 
- * ============================================================
- */
-function generate(n) {
-  n = (n === undefined) ? 1 : n
+function createPayload (ins, outs, opid, outValues) {
+  return '(' +
+    JSON.stringify(_.range(ins)) + ', ' +
+    JSON.stringify(_.range(outs)) + ', ' +
+    outs + ') ' +
+    opid.toString() + ' ' + JSON.stringify(outValues)
+}
+ 
+function selectCoins (unspentCoins, coinValueFn, neededSum) {
+  var total = 0
   
-  return new Promise (function (resolve, reject) {
-    client.setGenerate (true, n, function (err, res) {
-      if (err)
-        reject (err)
-      else {
-        resolve (n)
-      }
-    })
+  var selected = _.takeWhile(unspentCoins, function (n) {
+    return (total += coinValueFn(n)) >= neededSum
   })
-}
 
-function sendtoaddress (address, amount) {
-  return new Promise (function (resolve, reject) {
-    client.sendToAddress (address, amount, function (err, txid) {
-      if (err)
-        reject (err)
-      else
-        resolve (txid)
-    })
+  if (total < neededSum)
+    throw new Error ("Not enough coins!")
+ 
+  return selected
+}
+   
+function composeColoredSendTx (wallet, targets, changeAddress) {
+  function coinValueFn (coin) {
+    return coin.value
+  }
+
+  var unspentCoins = wallet.getUnspentCoins()
+
+  console.log('unspent coins ' , unspentCoins)
+  targets = _.clone(targets)
+  var neededSum = _.sum(targets, 'value')
+  var coins     = selectCoins(unspentCoins, coinValueFn, neededSum)
+  var inputSum  = _.sum(coins, 'value')
+  var change    = inputSum - neededSum   
+
+  wallet.coins = _.difference(wallet.coins, coins)
+  if (change > 0) {
+    targets.push({address: changeAddress, value: change})
+  }
+    
+  return {inputs: coins, targets: targets}
+}
+ 
+function composeColoredIssueTx (targets) {
+  return {inputs: [], targets: targets}
+}
+ 
+function composeBitcoinTx (coloredTx, uncoloredWallet) {
+  var tx = new Transaction()
+
+  var unspentCoins = uncoloredWallet.getUnspentCoins()
+  var changeAddress = uncoloredWallet.getAddress()
+  var index = 0
+  unspentCoins = _.reject(unspentCoins, 'cv')
+ 
+  var coloredTargets = coloredTx.targets
+  var coloredInputs  = coloredTx.inputs
+  var fee = 10000
+  var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee
+
+  _.each(coloredTargets, function(target) {
+    tx.addOutput(target.address, target.value)
+    index++
   })
-}
-
-function listtransactions (name) {
-  name = (name === undefined) ? "" : name
-  
-  return new Promise (function (resolve, reject) {
-    client.listTransactions (name, function (err, res) {
-      if (err)
-        reject (err)
-      else 
-        resolve (res)
-    })
+ 
+  _.each(coloredInputs, function(coin) {
+      tx.addInput(coin.txid, coin.index)
+      uncoloredNeeded -= coin.value
   })
-}
 
-function getrawtransaction (txid, sim) {
-  return new Promise (function (resolve, reject) {
-    client.getRawTransaction (txid, function (err, txHex) {
-      if (err)
-        reject (err)
-      else {
-        sim.transactions.push(Transaction.fromHex(txHex)) 
-        resolve(txHex)
-      }
-    })
-  })
-}
-
-function decoderawtransaction (rawtx) {
-  return new Promise (function (resolve, reject) {
-    client.decodeRawTransaction (rawtx, function (err, tx) {
-      if (err)
-        reject (err)
-      else 
-        resolve (tx)
-    })
-  })
-}
-
-function gettransaction (txid) {
-  return new Promise (function (resolve, reject) {
-    client.getTransaction (txid, function (err, tx) {
-      if (err)
-        reject (err)
-      else {
-        resolve(tx)
-      }
-    })
-  })
-}
-
-function sendrawtransaction (rawTx) {
-  return new Promise (function (resolve, reject) {
-    client.sendRawTransaction (rawTx, function (err, tx) {
-      if (err)
-        reject (err)
-      else
-        resolve (tx)
-    })
-  })
-}
-
-/**
- * ============================================================
- */
-
-/**
- * Simulation
- * @interface
-*/
-function Simulation(name) {
-  this.name          = name || 'test'
-  this.kernel        = new kernel.Kernel(this)
-  this.transactions  = []
-  this.wallets       = {}
-  this.coins         = []
-}
-
-/**
- * @return {Wallet}
- */
-Simulation.prototype.wallet = function (name) {
-    this.wallets[name] = new Wallet(this, name);
-    return this.wallets[name];
-};
-
-Simulation.prototype.addTx = function (tx) {
-    return this.transactions.push(tx);
-};
-
-Simulation.prototype.addCoins = function (coins) {
-    this.coins = this.coins.concat(coins);
-};
-
-Simulation.prototype.getUnspentCoins = function (addr) {
-  var unspent = []
-  var sim = this
-  _.map(sim.transactions, function (tx) {
-    var index = 0
-    _.each(tx.outs, function (out) {
-      if (out.script.chunks.length != 2 &&
-          getOutputAddress(out.script) == addr) {
-        _.find(sim.coins, function (c) {
-                return (c.txid == tx.getId() &&
-                        c.index == index     &&
-                        unspent.push(c))
-            })
-        }
-      index++
-    })
-  })
-  this.coins = _.difference(this.coins, unspent)
-  return unspent
-}
-
-/**
- * Wallet
- * @interface
- */
-function Wallet(simulation, name) {
-  this.name       = name || 'test'
-  this.simulation = simulation
-  this.key        = bitcoin.crypto.sha256(name)
-  this.wif        = this.getWIF()
-  this.privkey    = bitcoin.ECKey.fromWIF(this.wif)
-  this.pubkey     = this.privkey.pub
-  this.address    = this.pubkey.getAddress(network).toString()
-  this.coins      = []
-}
-
-/**
- * Get WIF of given private key
- * @return {string} WIF
- */
-Wallet.prototype.getWIF = function () {
-  var extkey   = new Buffer.concat([x80, this.key, x01])
-  var checksum = (sha256(sha256(extkey))).slice(0, 4)
-  var wif      = base58.encode(new Buffer.concat([extkey, checksum]))
-  
-  return wif
-}
-
-/**
- * Issue coin
- *
- */
-Wallet.prototype.issueCoin = function (value) {
-  const sim = this.simulation
-  
-  var coloredTx = this.simulation.kernel.composeIssueTx(
-    [{ 'address': this.getAddress(), 'value': value }]
-  )
-  
-  var txio = this.simulation.kernel.composeBitcoinTx(
-    coloredTx, this
-  )
-  
-  var tx = this.signTx(txio.tx)
-  sendrawtransaction (tx.toHex())
-  .then (function (txid) {
-    console.log('Coin issued successfully! txid: ', txid)
-    sim.addTx(tx)   
-    sim.addCoins(
-      sim.kernel.runKernel(tx, txio.inputs, txio.outValues)
+  var uncoloredSum = 0
+  var uncoloredInputs = []
+  var change = 0
+    
+  if (uncoloredNeeded > 0) {
+    uncoloredInputs = selectCoins(
+      unspentCoins,
+      function (coin) { return coin.value },
+      uncoloredNeeded
     )
-    return new Promise (function (resolve) {
-      resolve (true)
+    
+    uncoloredSum        = _.sum(uncoloredInputs, 'value')
+    _.each(uncoloredInputs, function(coin) {
+      tx.addInput(coin.txid, coin.index)
     })
-  })
-  .error (function (e) {
-    console.log('Error!', e)
-  })
-}
-
-/**
- * Get bitcoins
- */
-Wallet.prototype.getCoins = function () {
-  var wallet  = this
-  var address = this.getAddress()
-  var id      = null
+    change = uncoloredSum - uncoloredNeeded - _.sum(coloredTargets, 'value')
   
-  sendtoaddress (this.getAddress(), AMOUNT)
-  .then(function (txid) {
-    id = txid
-    return getrawtransaction (txid, wallet.simulation)
-  })
-  .then(function (txHex) {
-    return new Promise (function (resolve) {
-      resolve (bitcoin.Transaction.fromHex(txHex).outs)
-    })
-  })
-  .then(function (outs) {
-    return new Promise (function (resolve) {
-      for (var i = 0; i < outs.length; i++) { 
-        if (outs[i].script.chunks.length != 2 &&
-            getOutputAddress (outs[i].script) === address) {
-        wallet.coins.push({
-          txid      : id
-        , index     : i
-        , coinstate : (outs[i].value).toString()
-        , value     : outs[i].value
-        })
-        }
-      resolve(true)
-      }
-    })
-  })
-  .then(function (b) {
-    console.log('got ', AMOUNT * BTC, ' satoshi')
-  })
-}
+    if (change > 0) {
+      tx.addOutput(changeAddress, change)
+    }
+  }
 
-/**
- * Send
- */
-Wallet.prototype.send = function (value, target) {
-  var coloredTx = this.simulation.kernel.composeSendTx(
-    this,
-    [{ 'address': target.getAddress(), 'value': value }],
-    this.getAddress()
-  )
+  var outValues = _.pluck(coloredTargets, 'value').concat(
+    change == 0 ? [] : [change])
   
-  var txio = this.simulation.kernel.composeBitcoinTx(
-    coloredTx, this.simulation.wallets['uncolored']
-  )
+  var ins =
+    (coloredInputs === [])
+    ? coloredInputs.length + uncoloredInputs.length
+    : 0
+
+  var outs =
+    change
+    ? coloredTargets.length + 1
+    : coloredTargets.length
+
+  var opid =
+    coloredInputs.length
+    ? 0
+    : 1
   
-  var tx = this.signTx(txio.tx)
-  this.simulation.addTx(tx)
-  this.simulation.addCoins(
-    this.simulation.kernel.runKernel(tx, txio.inputs, txio.outValues)
-  )
+  var payload = createPayload (ins, outs, opid, outValues)
+    
+  tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0)
+    
+  uncoloredWallet.coins = _.difference(uncoloredWallet.coins, uncoloredInputs)
+
+  console.log('out values = ', outValues)
+  return {
+      'tx' : tx,
+      'outValues' : outValues,
+      'inputs' : coloredInputs.concat(uncoloredInputs)
+  }  
 }
 
-Wallet.prototype.getUnspentCoins = function () {
-  this.coins = this.coins.concat(
-    this.simulation.getUnspentCoins(this.address)
-  )
-  
-  return this.coins
+module.exports = {
+    composeColoredSendTx  : composeColoredSendTx,
+    composeBitcoinTx      : composeBitcoinTx,
+    composeColoredIssueTx : composeColoredIssueTx
 }
-
-/**
- * Sign transaction
- * @return {bitcoin.Transaction}
- */
-Wallet.prototype.signTx = function (tx) {
-  var txb = new bitcoin.TransactionBuilder.fromTransaction(tx)
-  for (var i = 0; i < txb.tx.ins.length; txb.sign(i, this.privkey), i++) { }
-  tx = txb.build()
-  return tx
-}
-
-/**
- * @return {number} balance
- */
-Wallet.prototype.getBalance = function () {
-    this.getUnspentCoins()
-    return _.sum(this.coins, "value")
-};
-
-/**
- * @return {string} address
- */
-Wallet.prototype.getAddress = function () {
-    return this.address
-};
-
-/**
- *Get address from output script
- *@return {string} address
- */
-function getOutputAddress (outScript) {
-  return bitcoin.Address.fromOutputScript(outScript, network).toString()
-}
-
-module.exports = Simulation
