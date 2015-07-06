@@ -40,6 +40,7 @@ function composeColoredSendTx (wallet, targets, changeAddress) {
 
   var unspentCoins = wallet.getUnspentCoins()
 
+  console.log('unspent coins ' , unspentCoins)
   targets = _.clone(targets)
   var neededSum = _.sum(targets, 'value')
   var coins     = selectCoins(unspentCoins, coinValueFn, neededSum)
@@ -58,7 +59,7 @@ function composeColoredIssueTx (targets) {
   return {inputs: [], targets: targets}
 }
  
- function composeBitcoinTx (coloredTx, uncoloredWallet) {
+function composeBitcoinTx (coloredTx, uncoloredWallet) {
   var tx = new Transaction()
 
   var unspentCoins = uncoloredWallet.getUnspentCoins()
