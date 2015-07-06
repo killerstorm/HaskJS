@@ -177,7 +177,7 @@ Simulation.prototype.getUnspentCoins = function (addr) {
     var index = 0
     _.each(tx.outs, function (out) {
       if (out.script.chunks.length != 2 &&
-          bitcoin.Address.fromOutputScript(out.script, network).toString() == addr) {
+          getOutputAddress(out.script) == addr) {
         _.find(sim.coins, function (c) {
                 return (c.txid == tx.getId() &&
                         c.index == index     &&
@@ -190,6 +190,7 @@ Simulation.prototype.getUnspentCoins = function (addr) {
   this.coins = _.difference(this.coins, unspent)
   return unspent
 }
+
 
 /**
  * Wallet
@@ -241,6 +242,9 @@ Wallet.prototype.issueCoin = function (value) {
     sim.addCoins(
       sim.kernel.runKernel(tx, txio.inputs, txio.outValues)
     )
+    return new Promise (function (resolve) {
+      resolve (true)
+    })
   })
   .error (function (e) {
     console.log('Error!', e)
@@ -340,5 +344,13 @@ Wallet.prototype.getBalance = function () {
 Wallet.prototype.getAddress = function () {
     return this.address
 };
+
+/**
+ *Get address from output script
+ *@return {string} address
+ */
+function getOutputAddress (outScript) {
+  return bitcoin.Address.fromOutputScript(outScript, network).toString()
+}
 
 module.exports = Simulation
