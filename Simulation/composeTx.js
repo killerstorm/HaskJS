@@ -58,7 +58,7 @@ function composeColoredIssueTx (targets) {
   return {inputs: [], targets: targets}
 }
  
- function composeBitcoinTx (coloredTx, uncoloredWallet) {
+function composeBitcoinTx (coloredTx, uncoloredWallet) {
   var tx = new Transaction()
 
   var unspentCoins = uncoloredWallet.getUnspentCoins()
@@ -71,8 +71,6 @@ function composeColoredIssueTx (targets) {
   var fee = 10000
   var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee
 
-   console.log('uncolored needed = ', uncoloredNeeded)
-   
   _.each(coloredTargets, function(target) {
     tx.addOutput(target.address, target.value)
     index++
@@ -83,7 +81,6 @@ function composeColoredIssueTx (targets) {
       uncoloredNeeded -= coin.value
   })
 
-   console.log('uncolored needed = ', uncoloredNeeded)
   var uncoloredSum = 0
   var uncoloredInputs = []
   var change = 0
@@ -130,7 +127,6 @@ function composeColoredIssueTx (targets) {
     
   uncoloredWallet.coins = _.difference(uncoloredWallet.coins, uncoloredInputs)
 
-  console.log('out values = ', outValues)
   return {
       'tx' : tx,
       'outValues' : outValues,
