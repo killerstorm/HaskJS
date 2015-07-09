@@ -2,7 +2,7 @@ var _           = require('lodash')
 var bitcoin     = require('bitcoinjs-lib')
 var kernel      = require('./kernel.js')
 var base58      = require('base58-native')
-var composetx   = require('./composeTx.js')
+var compose     = require('./composeTx.js')
 var bc          = require('bitcoin')
 var Promise     = require('bluebird')
 
@@ -225,11 +225,11 @@ Wallet.prototype.getWIF = function () {
 Wallet.prototype.issueCoin = function (value) {
   const sim = this.simulation
   
-  var coloredTx = this.simulation.kernel.composeIssueTx(
+  var coloredTx = compose.composeColoredIssueTx(
     [{ 'address': this.getAddress(), 'value': value }]
   )
   
-  var txio = this.simulation.kernel.composeBitcoinTx(
+  var txio = compose.composeBitcoinTx(
     coloredTx, this
   )
   
@@ -293,12 +293,12 @@ Wallet.prototype.getCoins = function () {
  * Send
  */
 Wallet.prototype.send = function (value, target) {
-  var coloredTx = this.simulation.kernel.composeSendTx(
+  var coloredTx = compose.composeColoredSendTx(
     this,
     [{ 'address': target.getAddress(), 'value': value }],
     this.getAddress()
   )
-  var txio = this.simulation.kernel.composeBitcoinTx(
+  var txio = compose.composeBitcoinTx(
     coloredTx, this
   )
   
