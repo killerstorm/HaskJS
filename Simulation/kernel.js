@@ -1,7 +1,7 @@
 var composetx = require('./composeTx.js');
-var kerneltx = require('../src/kerneltx.js');
-var haste = require('../main.js').getHaste();
-var _ = require('lodash');
+var kerneltx  = require('../src/kerneltx.js');
+var haste     = require('../main.js').getHaste();
+var _         = require('lodash');
 
 
 function Kernel(simulation) {
@@ -19,30 +19,14 @@ Kernel.prototype.runKernel = function(tx, ins, outs) {
     return t;
   });
 
-    var coins = _.map(haste.runKernel(ktx, ins, outs), JSON.parse);
+  var coins = _.map(haste.runKernel(ktx, ins, outs), JSON.parse);
   return coins;
-}
-
-Kernel.prototype.composeIssueTx = function (targets) {
-  var tx = composetx.composeColoredIssueTx (targets);
-  return tx;
-}
-
-Kernel.prototype.composeSendTx = function (unspent, targets, changeAddress) {
-  var tx = composetx.composeColoredSendTx (unspent, targets, changeAddress);
-  return tx;
-}
-
-Kernel.prototype.composeBitcoinTx = function (tx, uncoloredWallet) {
-  var composedTx = composetx.composeBitcoinTx (tx, uncoloredWallet);
-  return composedTx;
 }
         
 function Color() {
   throw new Error ("Color not implemented");
     //TODO
 }
-
 
 function ColorValue(colorId, value) {
   this.colorId = colorId;
