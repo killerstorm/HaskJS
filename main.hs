@@ -42,6 +42,17 @@ instance Serialize Coin where
     coinstate <- j .: "coinstate"
     return $ Coin txid index value coinstate
 
+instance Serialize Integer where
+  toJSON = Num . fromIntegral
+  parseJSON (Num x) =
+    case truncate x of
+      x' | fromIntegral x' == x ->
+        return x'
+      _ ->
+        fail "The given Number can't be represented as an Integer"
+  parseJSON _ =
+    fail "Tried to deserialize a non-Number to an Integer"
+
 
 apply' = (applyTx (toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
