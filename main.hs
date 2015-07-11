@@ -4,11 +4,10 @@ import Haste.Foreign
 import Haste
 import Haste.Prim 
 import Haste.JSON as J
-import qualified Haste.Serialize as S
+import Haste.Serialize
 import Data.Either
 import Control.Applicative
 import System.Random as SR
-
 
 import qualified Data.Map as Map
 
@@ -23,6 +22,26 @@ instance Pack Integer
 instance Unpack Integer
 instance Pack (WrappedCS Integer)
 instance Unpack (WrappedCS Integer)
+
+data Coin = Coin {
+  txid      :: String,
+  index     :: Int,
+  value     :: Integer,
+  coinstate :: String
+               } deriving Show
+
+instance Serialize Coin where
+  toJSON (Coin txid index value coinstate) = Dict [("txid", toJSON txid),
+                                                   ("index", toJSON index),
+                                                   ("value", toJSON value),
+                                                   ("coinstate", toJSON coinstate)]
+  parseJSON j = do
+    txid      <- j .: "txid"
+    index     <- j .: "index"
+    value     <- j .: "value"
+    coinstate <- j .: "coinstate"
+    return $ Coin txid index value coinstate
+
 
 apply' = (applyTx (toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
@@ -48,12 +67,12 @@ packToJSON ((txid, index), cs) = toJSStr $
 
 
 packToJSON' :: (Show cs) => (CoinId, WrappedCS cs, Integer) -> JSString
-packToJSON' ((txid, index), cs, value) = toJSStr $
-  "{" ++
+packToJSON' ((txid, index), cs, value) = encodeJSON $ toJSON $ Coin txid index value coinstate
+{-"{" ++
   "\"txid\" : \""  ++ txid       ++ "\", " ++
   "\"index\" : " ++ show index ++ ", " ++
   "\"coinstate\" : \""    ++ coinstate  ++ "\", " ++
-  "\"value\" : " ++ show value ++ "}"
+  "\"value\" : " ++ show value ++ "}" -}
   where coinstate = case cs of
           JustCS x  -> show x
           MissingCS -> "M"
@@ -131,3 +150,4 @@ main = do
   export (toJSStr "runKernel") runKernel
   export (toJSStr "getMuxShape") getMuxShape
   export (toJSStr "toposort") toposort
+
