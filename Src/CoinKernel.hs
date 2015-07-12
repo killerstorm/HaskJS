@@ -1,5 +1,12 @@
-module CoinKernel where
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, OverloadedStrings #-}
+module Src.CoinKernel where
 
+
+import Haste.Foreign
+import Haste
+import Haste.Prim 
+import Haste.JSON as J
+import Haste.Serialize
 
 import Debug.Trace
 
