@@ -58,11 +58,11 @@ function composeColoredIssueTx (targets) {
   return {inputs: [], targets: targets}
 }
  
-function composeBitcoinTx (coloredTx, uncoloredWallet) {
+function composeBitcoinTx (coloredTx, wallet) {
   var tx = new Transaction()
 
-  var unspentCoins = uncoloredWallet.getUnspentCoins()
-  var changeAddress = uncoloredWallet.getAddress()
+  var unspentCoins = wallet.getUnspentCoins()
+  var changeAddress = wallet.getAddress()
   var index = 0
   unspentCoins = _.reject(unspentCoins, 'cv')
  
@@ -125,13 +125,9 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
     
   tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0)
     
-  uncoloredWallet.coins = _.difference(uncoloredWallet.coins, uncoloredInputs)
+  wallet.coins = _.difference(wallet.coins, uncoloredInputs)
 
-  return {
-      'tx' : tx,
-      'outValues' : outValues,
-      'inputs' : coloredInputs.concat(uncoloredInputs)
-  }  
+  return tx
 }
 
 module.exports = {
