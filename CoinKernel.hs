@@ -7,7 +7,23 @@ import qualified Data.Map as Map
 
 type TxId = String
 type CoinId = (TxId, Int)
-data Tx a = Tx { payload :: a, inputs :: [CoinId], txId :: TxId, outputCount :: Int} deriving Show
+
+data Tx a =  Tx { payload     :: a,
+                  inputs      :: [CoinId],
+                  txId        :: TxId,
+                  outputCount :: Int} deriving Show
+
+instance (Serialize a) => Serialize (Tx a) where
+  toJSON (Tx payload inputs txid outputCount) = Dict [("payload", toJSON payload),
+                                                      ("inputs", Arr (map toJSON inputs)),
+                                                      ("txid", toJSON txid),
+                                                      ("outputCount", toJSON outputCount)]
+  parseJSON j = do
+    payload     <- j .: "payload"
+    inputs      <- j .: "inputs"
+    txid        <- j .: "txid"
+    outputCount <- j .: "outputCount"
+    return $ Tx payload inputs txid outputCount
   
 instance Eq (Tx a) where
   a == b = txId a == txId b

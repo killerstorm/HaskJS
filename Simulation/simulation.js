@@ -229,17 +229,18 @@ Wallet.prototype.issueCoin = function (value) {
     [{ 'address': this.getAddress(), 'value': value }]
   )
   
-  var txio = compose.composeBitcoinTx(
+  var tx = compose.composeBitcoinTx(
     coloredTx, this
   )
   
-  var tx = this.signTx(txio.tx)
+  tx   = this.signTx(tx)
+  
   sendrawtransaction (tx.toHex())
   .then (function (txid) {
     console.log('Coin issued successfully! txid: ', txid)
     sim.addTx(tx)   
     sim.addCoins(
-      sim.kernel.runKernel(tx, txio.inputs, txio.outValues)
+      sim.kernel.runKernel(tx)
     )
     return new Promise (function (resolve) {
       resolve (true)
@@ -302,10 +303,10 @@ Wallet.prototype.send = function (value, target) {
     coloredTx, this
   )
   
-  var tx = this.signTx(txio.tx)
+  var tx = this.signTx(tx)
   this.simulation.addTx(tx)
   this.simulation.addCoins(
-    this.simulation.kernel.runKernel(tx, txio.inputs, txio.outValues)
+    this.simulation.kernel.runKernel(tx, inputs, outValues)
   )
 }
 

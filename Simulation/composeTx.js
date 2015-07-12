@@ -59,11 +59,12 @@ function composeColoredIssueTx (targets) {
   return {inputs: [], targets: targets}
 }
  
-function composeBitcoinTx (coloredTx, uncoloredWallet) {
+
+function composeBitcoinTx (coloredTx, wallet) {
   var tx = new Transaction()
 
-  var unspentCoins = uncoloredWallet.getUnspentCoins()
-  var changeAddress = uncoloredWallet.getAddress()
+  var unspentCoins = wallet.getUnspentCoins()
+  var changeAddress = wallet.getAddress()
   var index = 0
   unspentCoins = _.reject(unspentCoins, 'cv')
  
@@ -72,8 +73,6 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
   var fee = 10000
   var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee
 
-   console.log('uncolored needed = ', uncoloredNeeded)
-   
   _.each(coloredTargets, function(target) {
     tx.addOutput(target.address, target.value)
     index++
@@ -84,7 +83,6 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
       uncoloredNeeded -= coin.value
   })
 
-   console.log('uncolored needed = ', uncoloredNeeded)
   var uncoloredSum = 0
   var uncoloredInputs = []
   var change = 0
@@ -129,14 +127,9 @@ function composeBitcoinTx (coloredTx, uncoloredWallet) {
     
   tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0)
     
-  uncoloredWallet.coins = _.difference(uncoloredWallet.coins, uncoloredInputs)
+  wallet.coins = _.difference(wallet.coins, uncoloredInputs)
 
-  console.log('out values = ', outValues)
-  return {
-      'tx' : tx,
-      'outValues' : outValues,
-      'inputs' : coloredInputs.concat(uncoloredInputs)
-  }  
+  return tx
 }
 
 module.exports = {
