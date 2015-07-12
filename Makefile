@@ -1,5 +1,5 @@
-main.js: _main.js main.hs
-	hastec '--start=$$HASTE_MAIN();' --with-js=_main.js main.hs
+Haste.js: ./lib/_main.js ./Src/Main.hs
+	hastec -o ./lib/Haste.js '--start=$$HASTE_MAIN();' --with-js=./lib/_main.js ./Src/Main.hs
 
 clean:
-	rm -r main main.hi main.o CoinKernel.hi TransactionGraph.hi CoinKernel.o TransactionGraph.o
+	rm -r main ./Src/*.hi ./Src/*.o
