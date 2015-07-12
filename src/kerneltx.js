@@ -11,29 +11,31 @@ function getInputs(transaction) {
 }
 
 function createKernelTx(t) {  //Tx for runCoinKernel
-    var tx = [];
-    tx.push(getPayload(t));
-    tx.push(getInputs(t));
-    tx.push(t.getId());
-    tx.push(t.outs.length - 1);
+  var tx = {}
+  
+  tx.payload     = getPayload(t)
+  tx.inputs      = getInputs(t)
+  tx.txid        = t.getId()
+  tx.outputCount = t.outs.length - 1
 
-    return tx;
+  return tx
 }
 
 function maybe_get_op_return(script) {
     if (script.chunks.length == 2 && script.chunks[0] == 106) {
-         return script.chunks[1];
-    } else { return null; }
+         return script.chunks[1]
+    } else { return null }
 }
 
 function getPayload(transaction) {
   for (var i = 0; i < transaction.outs.length; i++) {
       var op_return = maybe_get_op_return(transaction.outs[i].script);
       if (op_return) {
-          return op_return.toString();
+          return op_return.toString()
       }
   }
-  return "";
+  
+  return ""
 }
 
 
