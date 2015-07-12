@@ -11,46 +11,8 @@ import Haste.Serialize
 import Debug.Trace
 
 import qualified Data.Map as Map
+import Src.Types
 
-type TxId = String
-type CoinId = (TxId, Int)
-
-data Tx a =  Tx { payload     :: a,
-                  inputs      :: [CoinId],
-                  txId        :: TxId,
-                  outputCount :: Int} deriving Show
-
-instance (Serialize a) => Serialize (Tx a) where
-  toJSON (Tx payload inputs txid outputCount) = Dict [("payload", toJSON payload),
-                                                      ("inputs", Arr (map toJSON inputs)),
-                                                      ("txid", toJSON txid),
-                                                      ("outputCount", toJSON outputCount)]
-  parseJSON j = do
-    payload     <- j .: "payload"
-    inputs      <- j .: "inputs"
-    txid        <- j .: "txid"
-    outputCount <- j .: "outputCount"
-    return $ Tx payload inputs txid outputCount
-  
-instance Eq (Tx a) where
-  a == b = txId a == txId b
-  
-data WrappedCS cs = JustCS cs | MissingCS | InvalidCS | NullCS
- 
-instance Show cs => Show (WrappedCS cs) where
-  show wcs = case wcs of 
-    JustCS cs -> show cs
-    MissingCS -> "missing"
-    InvalidCS -> "invalid"
-    NullCS -> "null"
-
-type MuxShape = ([Int], [Int], Int)
-type Transactor cs = [cs] -> [cs]
-type WCSTransactor cs = Transactor (WrappedCS cs)
- 
-type CoinKernel tx cs = tx -> Transactor cs
-type WCSCoinKernel tx cs = tx -> WCSTransactor cs
- 
 properCS :: WrappedCS cs -> Bool
 properCS (JustCS _) = True
 properCS _ = False

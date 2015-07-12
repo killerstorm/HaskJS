@@ -1,6 +1,7 @@
 module Src.TransactionGraph where
 
 import Src.CoinKernel
+import Src.Types
 import qualified Data.Map as Map
   
 import Debug.Trace

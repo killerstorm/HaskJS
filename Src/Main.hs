@@ -17,6 +17,7 @@ import Debug.Trace
 
 import Src.CoinKernel
 import Src.TransactionGraph
+import Src.Types
 
 instance Pack JSON
 instance Unpack JSON
@@ -24,38 +25,6 @@ instance Pack Integer
 instance Unpack Integer
 instance Pack (WrappedCS Integer)
 instance Unpack (WrappedCS Integer)
-
-
-data Coin = Coin {
-  txid      :: String,
-  index     :: Int,
-  value     :: Integer,
-  coinstate :: String
-               } deriving Show
-
-instance Serialize Coin where
-  toJSON (Coin txid index value coinstate) = Dict [("txid", toJSON txid),
-                                                   ("index", toJSON index),
-                                                   ("value", toJSON value),
-                                                   ("coinstate", toJSON coinstate)]
-  parseJSON j = do
-    txid      <- j .: "txid"
-    index     <- j .: "index"
-    value     <- j .: "value"
-    coinstate <- j .: "coinstate"
-    return $ Coin txid index value coinstate
-
-instance Serialize Integer where
-  toJSON = Num . fromIntegral
-  parseJSON (Num x) =
-    case truncate x of
-      x' | fromIntegral x' == x ->
-        return x'
-      _ ->
-        fail "The given Number can't be represented as an Integer"
-  parseJSON _ =
-    fail "Tried to deserialize a non-Number to an Integer"
-
 
 apply' = (applyTx (toyMuxCoinKernel
            (toyDispatchCoinKernel (Map.fromList [(0, (strictCoinKernel transferCK)),
