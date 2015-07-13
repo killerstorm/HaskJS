@@ -10,6 +10,7 @@ import Haste.Serialize
 import Data.Either
 import Control.Applicative
 import System.Random as SR
+import qualified Data.List as L
 
 import qualified Data.Map as Map
 
@@ -43,19 +44,12 @@ packToJSON ((txid, index), cs, value) = encodeJSON $ toJSON $ Coin txid index va
           MissingCS -> "M"
           InvalidCS -> "I"
           NullCS    -> "N"
-
-
-topSort :: [(String, [CoinId], TxId, Int)] -> IO [(String, [CoinId], TxId, Int)]
-topSort xs = return $  map (\(Tx a b c d) -> (a, b, c, d)) g
-  where g' = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
-        g  = reverse $ topologicalSort g' g' -- full sorted graph
-
              
 runKernel :: JSString -> IO [JSString]
 runKernel txJSON = return $ map packToJSON coins
   where
     tx       = decodeTxJSON txJSON
-    outputs  = kernel (payload tx) []
+    outputs  = kernel "" []
     outs :: [Integer]
     outs     =  read (snd . head $
                      (reads (snd . head $
@@ -77,13 +71,21 @@ getMuxShape payload = return $ ms
   where ms = case parseMuxShape payload of
           Just x -> show $ fst x
           _      -> "Nothing"
-{-
+
 runCoinKernelOnGraph :: [JSString] -> JSString -> IO [JSString]
-runCoinKernelOnGraph xs = return $ map packToJSON $
-                          Map.toList $ foldTxGraph g apply'
-  where g' = Prelude.foldl (\acc (a, b, c, d) -> (Tx a b c d) : acc) [] xs
-        g  = reverse $ topologicalSort g' g'-- full sorted graph
--}
+runCoinKernelOnGraph xs tx = return $ map packToJSON $
+                             map (\((a, b), c) -> (a, b, c)) $
+                             (`zip` outs) $
+                             L.sortBy (\((_, x), _) ((_, y), _) -> compare x y) $
+                             filter (\((x, _), _) -> x == (txId tx')) $
+                             Map.toList $ foldTxGraph g apply'
+  where g'  = map decodeTxJSON xs
+        tx' = decodeTxJSON tx
+        g   = reverse $ topologicalSort g' [tx'] -- full sorted graph
+        outs     =  read (snd . head $
+                         (reads (snd . head $
+                         (reads (payload tx') :: [(([Int], [Int], Int), String)])) :: [(Int, String)] )) :: [Integer]
+
 {-
 --runCoinKernelOnGraph :: [(String, [CoinId], TxId, Int)] -> IO [String]
 _runCoinKernelOnGraph :: (String, [CoinId], TxId, Int) ->  [(String, [CoinId], TxId, Int)] -> IO [JSString]
@@ -114,10 +116,10 @@ toposort xs = return $ map show  g'
 -}
 
 main = do
---  export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
+  export (toJSStr "runCoinKernelOnGraph") runCoinKernelOnGraph
 --  export (toJSStr "_runCoinKernelOnGraph") _runCoinKernelOnGraph
 --  export (toJSStr "runCoinKernelOn") runCoinKernelOn
-  export (toJSStr "topSort") topSort
+--  export (toJSStr "topSort") topSort
   export (toJSStr "runKernel") runKernel
   export (toJSStr "getMuxShape") getMuxShape
 --  export (toJSStr "toposort") toposort
