@@ -1,8 +1,7 @@
-var composetx = require('./composeTx.js');
-var kerneltx  = require('../lib/kerneltx.js');
-var haste     = require('../lib/Haste.js').getHaste();
-var _         = require('lodash');
-
+var composetx  = require('./composeTx.js');
+var kerneltx   = require('../lib/kerneltx.js');
+var haste      = require('../lib/Haste.js').getHaste();
+var _          = require('lodash');
 
 var createKernelTx = kerneltx.createKernelTx
 var runKernel = haste.runKernel
@@ -36,15 +35,17 @@ Kernel.prototype.runKernelOnGraph = function (tx) {
 }
 
 
-        
-function Color () {
-  throw new Error ("Color not implemented");
-    //TODO
+//kernel :: ?        
+function Color (kernel, colorID) {
+  this.kernel  = kernel
+  this.colorID = colorID
 }
 
-function ColorValue (colorId, value) {
-  this.colorId = colorId;
-  this.value    = value;
+
+// color :: (instance of Color)
+function ColorValue (color, value) {  
+  this.color = color
+  this.value = value
 } 
 
 module.exports = {
