@@ -1,30 +1,50 @@
-var composetx = require('./composeTx.js');
-var kerneltx  = require('../src/kerneltx.js');
-var haste     = require('../main.js').getHaste();
-var _         = require('lodash');
+var composetx  = require('./composeTx.js')
+var kerneltx   = require('../lib/kerneltx.js')
+var haste      = require('../lib/Haste.js').getHaste()
+var _          = require('lodash')
 
+var createKernelTx = kerneltx.createKernelTx
+var runKernel = haste.runKernel
+var runCoinKernelOnGraph = haste.runCoinKernelOnGraph
 
 function Kernel (simulation) {
-  this.simulation = simulation;
+  this.simulation = simulation
 }
 
 Kernel.prototype.runKernel = function (tx) {
 
-  var optx = kerneltx.createKernelTx (tx) 
+  var optx = createKernelTx (tx) 
   
-  var coins = _.map(haste.runKernel(JSON.stringify(optx)), JSON.parse);
+  var coins = _.map(runKernel(JSON.stringify(optx)), JSON.parse)
 
   return coins;
 }
-        
-function Color () {
-  throw new Error ("Color not implemented");
-    //TODO
+
+Kernel.prototype.runKernelOnGraph = function (tx) {
+  var transactions = _.chain(this.simulation.transactions)
+                     .map(createKernelTx)
+                     .map(JSON.stringify)
+                     .value()
+
+  var optx = JSON.stringify(createKernelTx(tx))
+  
+  var coins = _.map(runCoinKernelOnGraph(transactions, optx), JSON.parse)
+
+  return coins
 }
 
-function ColorValue (colorId, value) {
-  this.colorId = colorId;
-  this.value    = value;
+
+//kernel :: ?        
+function Color (kernel, colorID) {
+  this.kernel  = kernel
+  this.colorID = colorID
+}
+
+
+// color :: (instance of Color)
+function ColorValue (color, value) {  
+  this.color = color
+  this.value = value
 } 
 
 module.exports = {

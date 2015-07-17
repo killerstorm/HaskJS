@@ -1,6 +1,7 @@
-module TransactionGraph where
+module Src.TransactionGraph where
 
-import CoinKernel
+import Src.CoinKernel
+import Src.Types
 import qualified Data.Map as Map
   
 import Debug.Trace
