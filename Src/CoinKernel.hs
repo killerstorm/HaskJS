@@ -9,7 +9,7 @@ import Haste.JSON as J
 import Haste.Serialize
 
 import Debug.Trace
-
+import Data.Maybe
 import qualified Data.Map as Map
 import Src.Types
 
@@ -42,7 +42,7 @@ strictTransactor txop inputs = if all properCS inputs
  
  
 strictCoinKernel :: CoinKernel tx a -> WCSCoinKernel tx a
-strictCoinKernel innerKernel tx = strictTransactor . innerKernel tx
+strictCoinKernel innerKernel tx = strictTransactor . innerKernel $ tx
  
  
 strictMux :: WCSTransactor a -> MuxShape -> WCSTransactor a
