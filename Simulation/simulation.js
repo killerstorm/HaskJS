@@ -3,37 +3,15 @@ var bitcoin     = require('bitcoinjs-lib')
 var kernel      = require('./kernel.js')
 var base58      = require('base58-native')
 var compose     = require('./composeTx.js')
-var bc          = require('bitcoin')
+var bc          = require('./bitcoinclient')
 var Promise     = require('bluebird')
+var testdata    = require('./testdata')
 
 var sha256      = bitcoin.crypto.sha256
 var Transaction = bitcoin.Transaction
-var client      = new bc.Client({
-  host : 'localhost'
-, port : 18332
-, user : 'user'
-, pass : 'password'
-})
+
 
 var network = bitcoin.networks.testnet
-
-/**
- * BTC
- * @const
- */
-const BTC = 100000000
-
-/**
- * SAT
- * @const
- */
-const SAT = 1e-8
-
-/**
- * AMOUNT
- * @const
- */
-const AMOUNT = 10
 
 /**
  * 0x80 byte
@@ -47,111 +25,35 @@ const x80 = new Buffer('80', 'hex')
  */
 const x01 = new Buffer('01', 'hex')
 
-/**
- * ============================================================
- * Promisified RPC functions
- * 
- * ============================================================
- */
-function generate(n) {
-  n = (n === undefined) ? 1 : n
-  
-  return new Promise (function (resolve, reject) {
-    client.setGenerate (true, n, function (err, res) {
-      if (err)
-        reject (err)
-      else {
-        resolve (n)
-      }
-    })
+function init (sim) {
+  sim.wallet('bitcoin')
+  sim.transactions = _.map(testdata.transactions, Transaction.fromHex)
+
+  _.each(sim.transactions, function (tx) {
+    var txid = tx.getId()
+    for (var i = 0; i < tx.outs.length; i++) {
+      var value = tx.outs[i].value
+      sim.coins.push({
+        "txid" : txid
+      , "index" : i
+      , "coinstate" : value.toString()
+      , "value" : value
+      })
+    }
   })
 }
-
-function sendtoaddress (address, amount) {
-  return new Promise (function (resolve, reject) {
-    client.sendToAddress (address, amount, function (err, txid) {
-      if (err)
-        reject (err)
-      else
-        resolve (txid)
-    })
-  })
-}
-
-function listtransactions (name) {
-  name = (name === undefined) ? "" : name
-  
-  return new Promise (function (resolve, reject) {
-    client.listTransactions (name, function (err, res) {
-      if (err)
-        reject (err)
-      else 
-        resolve (res)
-    })
-  })
-}
-
-function getrawtransaction (txid, sim) {
-  return new Promise (function (resolve, reject) {
-    client.getRawTransaction (txid, function (err, txHex) {
-      if (err)
-        reject (err)
-      else {
-        sim.transactions.push(Transaction.fromHex(txHex)) 
-        resolve(txHex)
-      }
-    })
-  })
-}
-
-function decoderawtransaction (rawtx) {
-  return new Promise (function (resolve, reject) {
-    client.decodeRawTransaction (rawtx, function (err, tx) {
-      if (err)
-        reject (err)
-      else 
-        resolve (tx)
-    })
-  })
-}
-
-function gettransaction (txid) {
-  return new Promise (function (resolve, reject) {
-    client.getTransaction (txid, function (err, tx) {
-      if (err)
-        reject (err)
-      else {
-        resolve(tx)
-      }
-    })
-  })
-}
-
-function sendrawtransaction (rawTx) {
-  return new Promise (function (resolve, reject) {
-    client.sendRawTransaction (rawTx, function (err, tx) {
-      if (err)
-        reject (err)
-      else
-        resolve (tx)
-    })
-  })
-}
-
-/**
- * ============================================================
- */
 
 /**
  * Simulation
  * @interface
-*/
+ */
 function Simulation(name) {
   this.name          = name || 'test'
   this.kernel        = new kernel.Kernel(this)
   this.transactions  = []
   this.wallets       = {}
   this.coins         = []
+  init(this)
 }
 
 /**
