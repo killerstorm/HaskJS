@@ -33,21 +33,18 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
   return selected
 }
    
-function composeColoredSendTx (wallet, targets, changeAddress) {
+function composeColoredSendTx (unspentCoins, targets, changeAddress) {
   function coinValueFn (coin) {
     return coin.value
   }
 
-  var unspentCoins = wallet.getUnspentCoins()
-
-  console.log('unspent coins ' , unspentCoins)
   targets = _.clone(targets)
   var neededSum = _.sum(targets, 'value')
   var coins     = selectCoins(unspentCoins, coinValueFn, neededSum)
   var inputSum  = _.sum(coins, 'value')
   var change    = inputSum - neededSum   
 
-  wallet.coins = _.difference(wallet.coins, coins)
+  unspentCoins = _.difference(unspentCoins, coins)
   if (change > 0) {
     targets.push({address: changeAddress, value: change})
   }
