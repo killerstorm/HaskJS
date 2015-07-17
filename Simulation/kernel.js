@@ -1,14 +1,14 @@
-var composetx  = require('./composeTx.js');
-var kerneltx   = require('../lib/kerneltx.js');
-var haste      = require('../lib/Haste.js').getHaste();
-var _          = require('lodash');
+var composetx  = require('./composeTx.js')
+var kerneltx   = require('../lib/kerneltx.js')
+var haste      = require('../lib/Haste.js').getHaste()
+var _          = require('lodash')
 
 var createKernelTx = kerneltx.createKernelTx
 var runKernel = haste.runKernel
 var runCoinKernelOnGraph = haste.runCoinKernelOnGraph
 
 function Kernel (simulation) {
-  this.simulation = simulation;
+  this.simulation = simulation
 }
 
 Kernel.prototype.runKernel = function (tx) {
@@ -26,7 +26,6 @@ Kernel.prototype.runKernelOnGraph = function (tx) {
                      .map(JSON.stringify)
                      .value()
 
-  console.log(transactions)
   var optx = JSON.stringify(createKernelTx(tx))
   
   var coins = _.map(runCoinKernelOnGraph(transactions, optx), JSON.parse)
