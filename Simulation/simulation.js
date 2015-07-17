@@ -137,59 +137,16 @@ Wallet.prototype.issueCoin = function (value) {
   
   tx   = this.signTx(tx)
   
-  sendrawtransaction (tx.toHex())
-  .then (function (txid) {
-    console.log('Coin issued successfully! txid: ', txid)
-    sim.addTx(tx)   
-    sim.addCoins(
-      sim.kernel.runKernel(tx)
-    )
-    return new Promise (function (resolve) {
-      resolve (true)
-    })
-  })
-  .error (function (e) {
-    console.log('Error!', e)
-  })
+  sim.addTx(tx)   
+  sim.addCoins(sim.kernel.runKernel(tx))
 }
 
 /**
  * Get bitcoins
  */
-Wallet.prototype.getCoins = function () {
-  var wallet  = this
-  var address = this.getAddress()
-  var id      = null
-  
-  sendtoaddress (this.getAddress(), AMOUNT)
-  .then(function (txid) {
-    id = txid
-    return getrawtransaction (txid, wallet.simulation)
-  })
-  .then(function (txHex) {
-    return new Promise (function (resolve) {
-      resolve (bitcoin.Transaction.fromHex(txHex).outs)
-    })
-  })
-  .then(function (outs) {
-    return new Promise (function (resolve) {
-      for (var i = 0; i < outs.length; i++) { 
-        if (outs[i].script.chunks.length != 2 &&
-            getOutputAddress (outs[i].script) === address) {
-        wallet.coins.push({
-          txid      : id
-        , index     : i
-        , coinstate : (outs[i].value).toString()
-        , value     : outs[i].value
-        })
-        }
-      resolve(true)
-      }
-    })
-  })
-  .then(function (b) {
-    console.log('got ', AMOUNT * BTC, ' satoshi')
-  })
+Wallet.prototype.getCoins = function (amount) {
+  var self = this
+  this.simulation.wallets['bitcoin'].send(amount, self)
 }
 
 /**
@@ -197,18 +154,18 @@ Wallet.prototype.getCoins = function () {
  */
 Wallet.prototype.send = function (value, target) {
   var coloredTx = compose.composeColoredSendTx(
-    this,
+    this.getUnspentCoins(),
     [{ 'address': target.getAddress(), 'value': value }],
     this.getAddress()
   )
-  var txio = compose.composeBitcoinTx(
+  var tx = compose.composeBitcoinTx(
     coloredTx, this
   )
   
-  var tx = this.signTx(tx)
+  tx = this.signTx(tx)
   this.simulation.addTx(tx)
   this.simulation.addCoins(
-    this.simulation.kernel.runKernel(tx, inputs, outValues)
+    this.simulation.kernel.runKernelOnGraph(tx)
   )
 }
 
@@ -250,6 +207,7 @@ Wallet.prototype.getAddress = function () {
  *Get address from output script
  *@return {string} address
  */
+
 function getOutputAddress (outScript) {
   return bitcoin.Address.fromOutputScript(outScript, network).toString()
 }
