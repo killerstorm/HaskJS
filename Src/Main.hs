@@ -49,12 +49,12 @@ runKernel :: JSString -> IO [JSString]
 runKernel txJSON = return $ map packToJSON coins
   where
     tx       = decodeTxJSON txJSON
-    outputs  = kernel "" []
+    outputs  = kernel (payload tx) []
     outs :: [Integer]
     outs     =  read (snd . head $
                      (reads (snd . head $
                      (reads (payload tx) :: [(([Int], [Int], Int), String)])) :: [(Int, String)] )) :: [Integer]
-    coins    = zip3 (zip (repeat (txId tx)) [0..]) outputs outs
+    coins    =  zip3 (zip (repeat (txId tx)) [0..]) outputs outs
 
 
 decodeTxJSON txJSON = let
