@@ -44,7 +44,8 @@ function composeColoredSendTx (unspentCoins, targets, changeAddress) {
   var inputSum  = _.sum(coins, 'value')
   var change    = inputSum - neededSum   
 
-  unspentCoins = _.difference(unspentCoins, coins)
+  unspentCoins.splice(0, coins.length)
+  
   if (change > 0) {
     targets.push({address: changeAddress, value: change})
   }
@@ -56,11 +57,9 @@ function composeColoredIssueTx (targets) {
   return {inputs: [], targets: targets}
 }
  
-function composeBitcoinTx (coloredTx, wallet) {
+function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
   var tx = new Transaction()
 
-  var unspentCoins = wallet.getUnspentCoins()
-  var changeAddress = wallet.getAddress()
   var index = 0
   unspentCoins = _.reject(unspentCoins, 'cv')
  
@@ -123,7 +122,7 @@ function composeBitcoinTx (coloredTx, wallet) {
     
   tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0)
     
-  wallet.coins = _.difference(wallet.coins, uncoloredInputs)
+  unspentCoins.splice(0, uncoloredInputs.length)
 
   return tx
 }
