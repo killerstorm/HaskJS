@@ -56,6 +56,7 @@ function Simulation(name) {
   init(this)
 }
 
+
 /**
  * @return {Wallet}
  */
@@ -159,7 +160,7 @@ Wallet.prototype.send = function (value, target) {
     this.getAddress()
   )
   var tx = compose.composeBitcoinTx(
-    coloredTx, this
+    coloredTx, this.getUnspentCoins(), this.getAddress()
   )
   
   tx = this.signTx(tx)
