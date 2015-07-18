@@ -24,12 +24,12 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
   var total = 0
   
   var selected = _.takeWhile(unspentCoins, function (n) {
-    return (total += coinValueFn(n)) >= neededSum
+    return total < neededSum ? (total += coinValueFn (n)) && true : false
   })
 
   if (total < neededSum)
     throw new Error ("Not enough coins!")
- 
+
   return selected
 }
    
