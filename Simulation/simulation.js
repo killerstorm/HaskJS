@@ -7,6 +7,8 @@ var bc          = require('./bitcoinclient')
 var Promise     = require('bluebird')
 var testdata    = require('./testdata')
 
+var Color       = kernel.Color
+var ColorValue  = kernel.ColorValue
 var sha256      = bitcoin.crypto.sha256
 var Transaction = bitcoin.Transaction
 
@@ -133,13 +135,20 @@ Wallet.prototype.issueCoin = function (value) {
   )
   
   var tx = compose.composeBitcoinTx(
-    coloredTx, this
+    coloredTx, this.getUnspentCoins(), this.getAddress()
   )
   
   tx   = this.signTx(tx)
   
   sim.addTx(tx)   
-  sim.addCoins(sim.kernel.runKernel(tx))
+  var coins = sim.kernel.runKernel(tx)
+  var color = new Color(sim.kernel, tx.getId())
+
+  coins[0].cv = new ColorValue (color, coins[0].value)
+
+  sim.addCoins(coins)
+
+  return color
 }
 
 /**
