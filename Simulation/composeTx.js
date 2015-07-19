@@ -134,7 +134,9 @@ function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
 }
 
 module.exports = {
-    composeColoredSendTx  : composeColoredSendTx,
-    composeBitcoinTx      : composeBitcoinTx,
-    composeColoredIssueTx : composeColoredIssueTx
+    composeColoredSendTx  : composeColoredSendTx
+  , composeBitcoinTx      : composeBitcoinTx
+  , composeColoredIssueTx : composeColoredIssueTx
+  , selectCoins           : selectCoins
+  , removeSpentCoins      : removeSpentCoins
 }
