@@ -168,9 +168,9 @@ Wallet.prototype.issueCoin = function (kernel, value) {
  * Get bitcoins
  */
 Wallet.prototype.getCoins = function (amount) {
-  var bitcoinWallet = this.simulation.wallets['bitcoin']
-  var neededAmount = amount + fee
-  var unspentCoins = bitcoinWallet.getUnspentCoins()
+  var bitcoinWallet  = this.simulation.wallets['bitcoin']
+  var neededAmount   = amount + fee
+  var unspentCoins   = bitcoinWallet.getUnspentCoins()
   var selectedCoins  = compose.selectCoins (
     unspentCoins,
     function (n) { return n.value },
@@ -212,6 +212,7 @@ Wallet.prototype.getCoins = function (amount) {
  * Send
  */
 Wallet.prototype.send = function (colorValue, target) {
+  var sim = this.simulation
   var coloredTx = compose.composeColoredSendTx(
     this.getUnspentCoins(),
     [{ 'address': target.getAddress(), 'value': colorValue.value }],
@@ -222,9 +223,9 @@ Wallet.prototype.send = function (colorValue, target) {
   )
   
   tx = this.signTx(tx)
-  this.simulation.addTx(tx)
-  this.simulation.addCoins(
-    colorValue.color.kernel.runCoinKernelOnGraph(tx)
+  sim.addTx(tx)
+  sim.addCoins(
+    colorValue.color.kernel.runCoinKernelOnGraph(tx, sim.transactions)
   )
 }
 
