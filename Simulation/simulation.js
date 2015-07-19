@@ -78,15 +78,15 @@ Simulation.prototype.kernel = function(kernelName) {
 Simulation.prototype.wallet = function (name) {
   this.wallets[name] = new Wallet(this, name)
   return this.wallets[name]
-};
+}
 
 Simulation.prototype.addTx = function (tx) {
   return this.transactions.push(tx)
-};
+}
 
 Simulation.prototype.addCoins = function (coins) {
   this.coins = this.coins.concat(coins)
-};
+}
 
 Simulation.prototype.getUnspentCoins = function (addr) {
   var unspent = []
@@ -140,7 +140,7 @@ Wallet.prototype.getWIF = function () {
  * Issue coin
  *
  */
-Wallet.prototype.issueCoin = function (value) {
+Wallet.prototype.issueCoin = function (kernel, value) {
   const sim = this.simulation
   
   var coloredTx = compose.composeColoredIssueTx(
@@ -154,8 +154,8 @@ Wallet.prototype.issueCoin = function (value) {
   tx   = this.signTx(tx)
   
   sim.addTx(tx)   
-  var coins = sim.kernel.runKernel(tx)
-  var color = new Color(sim.kernel, tx.getId())
+  var coins = kernel.runKernel(tx)
+  var color = new Color(kernel, tx.getId())
 
   coins[0].cv = new ColorValue (color, coins[0].value)
 
@@ -204,16 +204,17 @@ Wallet.prototype.getCoins = function (amount) {
   }
 
   this.simulation.addTx(tx)
-  this.simulation.addCoins(coins)    
+  this.simulation.addCoins(coins)
+    
 }
 
 /**
  * Send
  */
-Wallet.prototype.send = function (value, target) {
+Wallet.prototype.send = function (colorValue, target) {
   var coloredTx = compose.composeColoredSendTx(
     this.getUnspentCoins(),
-    [{ 'address': target.getAddress(), 'value': value }],
+    [{ 'address': target.getAddress(), 'value': colorValue.value }],
     this.getAddress()
   )
   var tx = compose.composeBitcoinTx(
@@ -223,7 +224,7 @@ Wallet.prototype.send = function (value, target) {
   tx = this.signTx(tx)
   this.simulation.addTx(tx)
   this.simulation.addCoins(
-    this.simulation.kernel.runKernelOnGraph(tx)
+    colorValue.color.kernel.runCoinKernelOnGraph(tx)
   )
 }
 
@@ -255,6 +256,7 @@ Wallet.prototype.getBalance = function () {
 }
 
 /**
+ * Get Wallet's address
  * @return {string} address
  */
 Wallet.prototype.getAddress = function () {
