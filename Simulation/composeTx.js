@@ -19,7 +19,13 @@ function createPayload (ins, outs, opid, outValues) {
     outs + ') ' +
     opid.toString() + ' ' + JSON.stringify(outValues)
 }
- 
+
+function removeSpentCoins (unspentCoins, spentCoins) {
+  _.each(spentCoins, function(coin) {
+    unspentCoins.splice(_.findIndex(unspentCoins, coin), 1)
+  })
+}
+
 function selectCoins (unspentCoins, coinValueFn, neededSum) {
   var total = 0
   
@@ -44,7 +50,7 @@ function composeColoredSendTx (unspentCoins, targets, changeAddress) {
   var inputSum  = _.sum(coins, 'value')
   var change    = inputSum - neededSum   
 
-  unspentCoins.splice(0, coins.length)
+  removeSpentCoins (unspentCoins, coins)
   
   if (change > 0) {
     targets.push({address: changeAddress, value: change})
@@ -122,13 +128,15 @@ function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
     
   tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0)
     
-  unspentCoins.splice(0, uncoloredInputs.length)
+  removeSpentCoins(unspentCoins, uncoloredInputs)
 
   return tx
 }
 
 module.exports = {
-    composeColoredSendTx  : composeColoredSendTx,
-    composeBitcoinTx      : composeBitcoinTx,
-    composeColoredIssueTx : composeColoredIssueTx
+    composeColoredSendTx  : composeColoredSendTx
+  , composeBitcoinTx      : composeBitcoinTx
+  , composeColoredIssueTx : composeColoredIssueTx
+  , selectCoins           : selectCoins
+  , removeSpentCoins      : removeSpentCoins
 }

@@ -4,44 +4,72 @@ var haste      = require('../lib/Haste.js').getHaste()
 var _          = require('lodash')
 
 var createKernelTx = kerneltx.createKernelTx
-var runKernel = haste.runKernel
-var runCoinKernelOnGraph = haste.runCoinKernelOnGraph
+var _runKernel = haste.runKernel
+var _runCoinKernelOnGraph = haste.runCoinKernelOnGraph
 
-function Kernel (simulation) {
+/**
+ * Kernel.
+ * @constructor
+ */
+function Kernel (simulation, kernelName) {
+  switch (kernelName) {
+    case 'toy' :
+      this.runKernel = runKernel
+      this.runCoinKernelOnGraph = runCoinKernelOnGraph
+      break
+    default:
+      throw new Error("Kernel does not exist!")
+  }
   this.simulation = simulation
 }
 
-Kernel.prototype.runKernel = function (tx) {
+
+/**
+ * run kernel
+ * @param {string} tx
+ */
+function runKernel (tx) {
 
   var optx = createKernelTx (tx) 
-  
-  var coins = _.map(runKernel(JSON.stringify(optx)), JSON.parse)
+  var coins = _.map(_runKernel(JSON.stringify(optx)), JSON.parse)
 
-  return coins;
+  return coins
 }
 
-Kernel.prototype.runKernelOnGraph = function (tx) {
+/**
+ * run kernel on graph
+ * @param {string} tx
+ */
+function runCoinKernelOnGraph (tx) {
   var transactions = _.chain(this.simulation.transactions)
                      .map(createKernelTx)
                      .map(JSON.stringify)
                      .value()
-
+  
   var optx = JSON.stringify(createKernelTx(tx))
   
-  var coins = _.map(runCoinKernelOnGraph(transactions, optx), JSON.parse)
+  var coins = _.map(_runCoinKernelOnGraph(transactions, optx), JSON.parse)
 
   return coins
 }
 
 
-//kernel :: ?        
+/**
+ * Color
+ * @constructor
+ * @param {string} colorID
+ */
 function Color (kernel, colorID) {
   this.kernel  = kernel
   this.colorID = colorID
 }
 
 
-// color :: (instance of Color)
+/**
+ * ColorValue
+ * @constructor
+ * @param {number} value
+ */
 function ColorValue (color, value) {  
   this.color = color
   this.value = value

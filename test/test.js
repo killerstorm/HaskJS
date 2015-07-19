@@ -3,7 +3,9 @@ var kernel     = require('../Simulation/kernel.js')
 var bitcoin    = require('bitcoinjs-lib')
 var _          = require('lodash')
 var expect     = require('chai').expect
-
+var Kernel     = kernel.Kernel
+var Color      = kernel.Color
+var ColorValue = kernel.ColorValue
 
 
 describe("Simulation", function() {
@@ -11,14 +13,17 @@ describe("Simulation", function() {
   var alice
   var bob
   var bitcoin
+  var kernel
+  var color
     
   it("'new Simulation()' should return new simulation object", function() {
     sim = new Simulation()
     expect(sim).to.be.an.instanceof(Simulation)
     expect(sim).to.have.a.property('name', 'test')
     expect(sim).to.have.a.property('transactions')
+    expect(sim).to.have.a.property('coins')
     expect(sim.wallets).to.have.a.property('bitcoin')
-  });
+  })
     
   describe("Wallets initialization", function () {
     it("Default wallet must be already created", function () {
@@ -37,6 +42,14 @@ describe("Simulation", function() {
     })
   })
 
+  describe("Create kernel", function() {
+    it("Just one kernel now available, 'toy', "
+      + "so sim.kernel('toy') returns new Kernel object", function() {
+        kernel = sim.kernel('toy')
+        expect(kernel).to.be.an.instanceof(Kernel)
+      })
+  })
+      
   describe("Wallet operations", function() {
     it("Default wallet must contain some bitcoins already", function() {
       var balance = bitcoin.getBalance()
@@ -52,27 +65,32 @@ describe("Simulation", function() {
         bob.getCoins(2000000000)
       })
     })
-        
 
+    describe("IssueCoin must retun new Color object", function () {
+      it("Alice issues a Coin", function () {
+        color = alice.issueCoin (kernel, 5000000)
+        expect(color).to.be.an.instanceof(Color)
+      })
+    })
+    
     describe("Get balance", function() {
-      it("Alice's balance, expected to equal 1000000000 satoshi", function() {
+      it("Alice getBalance()", function() {
         var balance = alice.getBalance()
-        expect(balance).to.equal(1000000000)
+        expect(balance).to.equal(1999989454)
       })
 
-      it("Bob's balance, expected to equal 2000000000 satoshi", function() {
+      it("Bob getBalance()", function() {
         var balance = bob.getBalance()
-        expect(balance).to.equal(2000000000)
       })
     })
 
     describe("Send", function() {
-      it("Alice sends 1000000 satoshi to Bob", function() {
-        alice.send(1000000, bob)
+      it("Alice sends coloredCoin to Bob", function() {
+        alice.send(new ColorValue (color, 250000), bob)
       })
 
-      it("Bob sends 1000000000 satoshi to Alice", function() {
-        bob.send(1000000000, alice)
+      it("Bob sends coloredCoin to Alice", function() {
+        bob.send(new ColorValue (color, 250000), alice)
       })
 
     })        

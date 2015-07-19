@@ -7,11 +7,19 @@ var bc          = require('./bitcoinclient')
 var Promise     = require('bluebird')
 var testdata    = require('./testdata')
 
+var Color       = kernel.Color
+var ColorValue  = kernel.ColorValue
+var Kernel      = kernel.Kernel
 var sha256      = bitcoin.crypto.sha256
 var Transaction = bitcoin.Transaction
 
-
 var network = bitcoin.networks.testnet
+
+/**
+ * fee
+ * @const
+ */
+const fee = 10000
 
 /**
  * 0x80 byte
@@ -45,11 +53,10 @@ function init (sim) {
 
 /**
  * Simulation
- * @interface
+ * @constructor
  */
 function Simulation(name) {
   this.name          = name || 'test'
-  this.kernel        = new kernel.Kernel(this)
   this.transactions  = []
   this.wallets       = {}
   this.coins         = []
@@ -58,20 +65,28 @@ function Simulation(name) {
 
 
 /**
+ * kernel
+ */
+Simulation.prototype.kernel = function(kernelName) {
+  var kernel = new Kernel(this, kernelName)
+  return kernel
+}
+
+/**
  * @return {Wallet}
  */
 Simulation.prototype.wallet = function (name) {
   this.wallets[name] = new Wallet(this, name)
   return this.wallets[name]
-};
+}
 
 Simulation.prototype.addTx = function (tx) {
   return this.transactions.push(tx)
-};
+}
 
 Simulation.prototype.addCoins = function (coins) {
   this.coins = this.coins.concat(coins)
-};
+}
 
 Simulation.prototype.getUnspentCoins = function (addr) {
   var unspent = []
@@ -125,7 +140,7 @@ Wallet.prototype.getWIF = function () {
  * Issue coin
  *
  */
-Wallet.prototype.issueCoin = function (value) {
+Wallet.prototype.issueCoin = function (kernel, value) {
   const sim = this.simulation
   
   var coloredTx = compose.composeColoredIssueTx(
@@ -133,30 +148,73 @@ Wallet.prototype.issueCoin = function (value) {
   )
   
   var tx = compose.composeBitcoinTx(
-    coloredTx, this
+    coloredTx, this.getUnspentCoins(), this.getAddress()
   )
   
   tx   = this.signTx(tx)
   
   sim.addTx(tx)   
-  sim.addCoins(sim.kernel.runKernel(tx))
+  var coins = kernel.runKernel(tx)
+  var color = new Color(kernel, tx.getId())
+
+  coins[0].cv = new ColorValue (color, coins[0].value)
+
+  sim.addCoins(coins)
+
+  return color
 }
 
 /**
  * Get bitcoins
  */
 Wallet.prototype.getCoins = function (amount) {
-  var self = this
-  this.simulation.wallets['bitcoin'].send(amount, self)
+  var bitcoinWallet = this.simulation.wallets['bitcoin']
+  var neededAmount = amount + fee
+  var unspentCoins = bitcoinWallet.getUnspentCoins()
+  var selectedCoins  = compose.selectCoins (
+    unspentCoins,
+    function (n) { return n.value },
+    neededAmount
+  )
+
+  compose.removeSpentCoins (unspentCoins, selectedCoins)
+  
+  var tx = new Transaction()
+
+  _.each(selectedCoins, function (coin) {
+    tx.addInput(coin.txid, coin.index)
+  })
+
+  tx.addOutput(this.getAddress(), amount) 
+  var change = _.sum(selectedCoins, 'value') - neededAmount
+
+  if (change > 0)
+    tx.addOutput(bitcoinWallet.getAddress(), change)
+
+  tx = bitcoinWallet.signTx(tx)
+
+  var coins = []
+  for (var i = 0; i < tx.outs.length; i++) {
+    coins.push({
+      txid : tx.getId()
+    , index : i
+    , coinstate : tx.outs[i].value.toString()
+    , value : tx.outs[i].value
+    })
+  }
+
+  this.simulation.addTx(tx)
+  this.simulation.addCoins(coins)
+    
 }
 
 /**
  * Send
  */
-Wallet.prototype.send = function (value, target) {
+Wallet.prototype.send = function (colorValue, target) {
   var coloredTx = compose.composeColoredSendTx(
     this.getUnspentCoins(),
-    [{ 'address': target.getAddress(), 'value': value }],
+    [{ 'address': target.getAddress(), 'value': colorValue.value }],
     this.getAddress()
   )
   var tx = compose.composeBitcoinTx(
@@ -166,7 +224,7 @@ Wallet.prototype.send = function (value, target) {
   tx = this.signTx(tx)
   this.simulation.addTx(tx)
   this.simulation.addCoins(
-    this.simulation.kernel.runKernelOnGraph(tx)
+    colorValue.color.kernel.runCoinKernelOnGraph(tx)
   )
 }
 
@@ -198,6 +256,7 @@ Wallet.prototype.getBalance = function () {
 }
 
 /**
+ * Get Wallet's address
  * @return {string} address
  */
 Wallet.prototype.getAddress = function () {
