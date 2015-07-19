@@ -20,7 +20,6 @@ function Kernel (simulation, kernelName) {
     default:
       throw new Error("Kernel does not exist!")
   }
-  this.simulation = simulation
 }
 
 
@@ -39,9 +38,10 @@ function runKernel (tx) {
 /**
  * run kernel on graph
  * @param {string} tx
+ * @param {[Transaction]} txs
  */
-function runCoinKernelOnGraph (tx) {
-  var transactions = _.chain(this.simulation.transactions)
+function runCoinKernelOnGraph (tx, txs) {
+  var transactions = _.chain(txs)
                      .map(createKernelTx)
                      .map(JSON.stringify)
                      .value()
