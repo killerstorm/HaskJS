@@ -9,6 +9,7 @@ var testdata    = require('./testdata')
 
 var Color       = kernel.Color
 var ColorValue  = kernel.ColorValue
+var Kernel      = kernel.Kernel
 var sha256      = bitcoin.crypto.sha256
 var Transaction = bitcoin.Transaction
 
@@ -52,17 +53,24 @@ function init (sim) {
 
 /**
  * Simulation
- * @interface
+ * @constructor
  */
 function Simulation(name) {
   this.name          = name || 'test'
-  this.kernel        = new kernel.Kernel(this)
   this.transactions  = []
   this.wallets       = {}
   this.coins         = []
   init(this)
 }
 
+
+/**
+ * kernel
+ */
+Simulation.prototype.kernel = function(kernelName) {
+  var kernel = new Kernel(this, kernelName)
+  return kernel
+}
 
 /**
  * @return {Wallet}
