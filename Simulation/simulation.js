@@ -12,8 +12,13 @@ var ColorValue  = kernel.ColorValue
 var sha256      = bitcoin.crypto.sha256
 var Transaction = bitcoin.Transaction
 
-
 var network = bitcoin.networks.testnet
+
+/**
+ * fee
+ * @const
+ */
+const fee = 10000
 
 /**
  * 0x80 byte
@@ -155,8 +160,43 @@ Wallet.prototype.issueCoin = function (value) {
  * Get bitcoins
  */
 Wallet.prototype.getCoins = function (amount) {
-  var self = this
-  this.simulation.wallets['bitcoin'].send(amount, self)
+  var bitcoinWallet = this.simulation.wallets['bitcoin']
+  var neededAmount = amount + fee
+  var unspentCoins = bitcoinWallet.getUnspentCoins()
+  var selectedCoins  = compose.selectCoins (
+    unspentCoins,
+    function (n) { return n.value },
+    neededAmount
+  )
+
+  compose.removeSpentCoins (unspentCoins, selectedCoins)
+  
+  var tx = new Transaction()
+
+  _.each(selectedCoins, function (coin) {
+    tx.addInput(coin.txid, coin.index)
+  })
+
+  tx.addOutput(this.getAddress(), amount) 
+  var change = _.sum(selectedCoins, 'value') - neededAmount
+
+  if (change > 0)
+    tx.addOutput(bitcoinWallet.getAddress(), change)
+
+  tx = bitcoinWallet.signTx(tx)
+
+  var coins = []
+  for (var i = 0; i < tx.outs.length; i++) {
+    coins.push({
+      txid : tx.getId()
+    , index : i
+    , coinstate : tx.outs[i].value.toString()
+    , value : tx.outs[i].value
+    })
+  }
+
+  this.simulation.addTx(tx)
+  this.simulation.addCoins(coins)    
 }
 
 /**
