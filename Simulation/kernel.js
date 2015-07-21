@@ -11,24 +11,29 @@ var _runCoinKernelOnGraph = haste.runCoinKernelOnGraph
  * Kernel.
  * @constructor
  */
-function Kernel (simulation, kernelName) {
-  switch (kernelName) {
-    case 'toy' :
-      this.runKernel = runKernel
-      this.runCoinKernelOnGraph = runCoinKernelOnGraph
-      break
-    default:
-      throw new Error("Kernel does not exist!")
-  }
-  this.simulation = simulation
+function Kernel (kernelName, sim) {
+  this.name = kernelName
+  this.simulation = sim
 }
 
-
+/**
+ * Process transaction
+ * @param {string} tx
+ * @return {[Object]} 
+ */
+Kernel.prototype.processTx = function (tx, inputCoins) {
+  return (inputCoins)
+       ? runKernel (tx, inputCoins)
+       : runCoinKernelOnGraph(tx, this.simulation.transactions)
+}
+    
 /**
  * run kernel
  * @param {string} tx
+ * @param {[Object]} unputCoins
+ * @return {[Object]}
  */
-function runKernel (tx) {
+function runKernel (tx, inputCoins) {
 
   var optx = createKernelTx (tx) 
   var coins = _.map(_runKernel(JSON.stringify(optx)), JSON.parse)
@@ -39,9 +44,11 @@ function runKernel (tx) {
 /**
  * run kernel on graph
  * @param {string} tx
+ * @param {[Transaction]} txs
+ * @return {[Object]}
  */
-function runCoinKernelOnGraph (tx) {
-  var transactions = _.chain(this.simulation.transactions)
+function runCoinKernelOnGraph (tx, txs) {
+  var transactions = _.chain(txs)
                      .map(createKernelTx)
                      .map(JSON.stringify)
                      .value()
@@ -58,12 +65,26 @@ function runCoinKernelOnGraph (tx) {
  * Color
  * @constructor
  * @param {string} colorID
+ * @param {Kernel} kernel
+ * @param {string} name
  */
-function Color (kernel, colorID) {
+function Color (kernel, colorID, name) {
+  this.name    = name
   this.kernel  = kernel
   this.colorID = colorID
 }
 
+Color.prototype.getName = function () {
+  return this.name
+}
+
+/**
+ * Get kernel
+ * @return {Kernel}
+ */
+  Color.prototype.getKernel = function () {
+  return this.kernel
+}
 
 /**
  * ColorValue
@@ -73,7 +94,23 @@ function Color (kernel, colorID) {
 function ColorValue (color, value) {  
   this.color = color
   this.value = value
-} 
+}
+
+/**
+ * Get color
+ * @return {Color}
+ */
+ColorValue.prototype.getColor = function () {
+  return this.color
+}
+
+/**
+ * getValue
+ * @return {number}
+ */
+ColorValue.prototype.getValue = function() {
+  return this.value
+}
 
 module.exports = {
   Kernel      : Kernel,
