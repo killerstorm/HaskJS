@@ -54,6 +54,7 @@ function init (sim) {
 /**
  * Simulation
  * @constructor
+ * @param {string} name
  */
 function Simulation(name) {
   this.name          = name || 'test'
@@ -66,6 +67,8 @@ function Simulation(name) {
 
 /**
  * kernel
+ * @param {string} kernelName
+ * @return {Kernel}
  */
 Simulation.prototype.kernel = function(kernelName) {
   var kernel
@@ -80,6 +83,7 @@ Simulation.prototype.kernel = function(kernelName) {
 }
 
 /**
+ * @param {string} name
  * @return {Wallet}
  */
 Simulation.prototype.wallet = function (name) {
@@ -87,14 +91,24 @@ Simulation.prototype.wallet = function (name) {
   return this.wallets[name]
 }
 
+/**
+ * @param {Transaction} tx
+ */
 Simulation.prototype.addTx = function (tx) {
   return this.transactions.push(tx)
 }
 
+/**
+ * @param {[Object]} coins
+ */
 Simulation.prototype.addCoins = function (coins) {
   this.coins = this.coins.concat(coins)
 }
 
+/**
+ * @param {string} addr
+ * @return {[Object]}
+ */
 Simulation.prototype.getUnspentCoins = function (addr) {
   var unspent = []
   var sim = this
@@ -146,9 +160,11 @@ Wallet.prototype.getWIF = function () {
 
 /**
  * Issue coin
- *
+ * @param {Kernel} kernel
+ * @param {number} value
+ * return {Color} 
  */
-Wallet.prototype.issueCoin = function (kernel, value) {
+Wallet.prototype.issueCoin = function (kernel, value, colorName) {
   const sim = this.simulation
   
   var coloredTx = compose.composeColoredIssueTx(
@@ -163,7 +179,7 @@ Wallet.prototype.issueCoin = function (kernel, value) {
   
   sim.addTx(tx)   
   var coins = kernel.processTx(tx)
-  var color = new Color(kernel, tx.getId())
+  var color = new Color(kernel, tx.getId(), colorName)
 
   coins[0].cv = new ColorValue (color, coins[0].value)
 
@@ -174,6 +190,7 @@ Wallet.prototype.issueCoin = function (kernel, value) {
 
 /**
  * Get bitcoins
+ * @param {number} amount
  */
 Wallet.prototype.getCoins = function (amount) {
   var bitcoinWallet  = this.simulation.wallets['bitcoin']
@@ -218,13 +235,16 @@ Wallet.prototype.getCoins = function (amount) {
 
 /**
  * Send
+ * @param {ColorValue} colorValue
+ * @param {Wallet} target
  */
 Wallet.prototype.send = function (colorValue, target) {
   var sim = this.simulation
   var coloredTx = compose.composeColoredSendTx(
     this.getUnspentCoins(),
-    [{ 'address': target.getAddress(), 'value': colorValue.value }],
-    this.getAddress()
+    [{ 'address': target.getAddress(), 'value': colorValue.getValue() }],
+    this.getAddress(),
+    colorValue.getColor().getName()
   )
 
   var coloredOutputsNumber = coloredTx.targets.length
@@ -236,14 +256,17 @@ Wallet.prototype.send = function (colorValue, target) {
   tx = this.signTx(tx)
   sim.addTx(tx)
 
-  var coins = colorValue.color.kernel.processTx(tx)
+  var coins = colorValue.getColor().getKernel().processTx(tx)
   for (var i = 0; i < coloredOutputsNumber; i++)
-    coins[i].cv = new ColorValue (colorValue.color, coins[i].value)
+    coins[i].cv = new ColorValue (colorValue.getColor(), coins[i].value)
 
   sim.addCoins(coins)
 }
 
-
+/**
+ * Get unspent coins
+ * @return {[Object]}
+ */
 Wallet.prototype.getUnspentCoins = function () {
   this.coins = this.coins.concat(
     this.simulation.getUnspentCoins(this.address)
@@ -253,6 +276,7 @@ Wallet.prototype.getUnspentCoins = function () {
 
 /**
  * Sign transaction
+ * @param {Transaction} tx
  * @return {bitcoin.Transaction}
  */
 Wallet.prototype.signTx = function (tx) {
@@ -263,6 +287,7 @@ Wallet.prototype.signTx = function (tx) {
 }
 
 /**
+ * Get balance
  * @return {number} balance
  */
 Wallet.prototype.getBalance = function () {
@@ -276,13 +301,12 @@ Wallet.prototype.getBalance = function () {
  */
 Wallet.prototype.getAddress = function () {
   return this.address
-};
+}
 
 /**
  *Get address from output script
  *@return {string} address
  */
-
 function getOutputAddress (outScript) {
   return bitcoin.Address.fromOutputScript(outScript, network).toString()
 }
