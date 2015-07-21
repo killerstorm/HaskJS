@@ -68,7 +68,7 @@ describe("Simulation", function() {
 
     describe("IssueCoin must retun new Color object", function () {
       it("Alice issues a Coin", function () {
-        color = alice.issueCoin (kernel, 5000000)
+        color = alice.issueCoin (kernel, 5000000, 'test_color')
         expect(color).to.be.an.instanceof(Color)
       })
     })
