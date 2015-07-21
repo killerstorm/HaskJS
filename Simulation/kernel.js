@@ -11,23 +11,29 @@ var _runCoinKernelOnGraph = haste.runCoinKernelOnGraph
  * Kernel.
  * @constructor
  */
-function Kernel (simulation, kernelName) {
-  switch (kernelName) {
-    case 'toy' :
-      this.runKernel = runKernel
-      this.runCoinKernelOnGraph = runCoinKernelOnGraph
-      break
-    default:
-      throw new Error("Kernel does not exist!")
-  }
+function Kernel (kernelName, sim) {
+  this.name = kernelName
+  this.simulation = sim
 }
 
-
+/**
+ * Process transaction
+ * @param {string} tx
+ * @return {[Object]} 
+ */
+Kernel.prototype.processTx = function (tx, inputCoins) {
+  return (inputCoins)
+       ? runKernel (tx, inputCoins)
+       : runCoinKernelOnGraph(tx, this.simulation.transactions)
+}
+    
 /**
  * run kernel
  * @param {string} tx
+ * @param {[Object]} unputCoins
+ * @return {[Object]}
  */
-function runKernel (tx) {
+function runKernel (tx, inputCoins) {
 
   var optx = createKernelTx (tx) 
   var coins = _.map(_runKernel(JSON.stringify(optx)), JSON.parse)
@@ -39,6 +45,7 @@ function runKernel (tx) {
  * run kernel on graph
  * @param {string} tx
  * @param {[Transaction]} txs
+ * @return {[Object]}
  */
 function runCoinKernelOnGraph (tx, txs) {
   var transactions = _.chain(txs)
