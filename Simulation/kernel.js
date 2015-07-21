@@ -80,7 +80,15 @@ function Color (kernel, colorID) {
 function ColorValue (color, value) {  
   this.color = color
   this.value = value
-} 
+}
+
+/**
+ * getValue
+ * @return {number}
+ */
+ColorValue.prototype.getValue = function() {
+  return this.value
+}
 
 module.exports = {
   Kernel      : Kernel,
