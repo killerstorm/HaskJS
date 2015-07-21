@@ -1,119 +1,167 @@
-var composetx  = require('./composeTx.js')
-var kerneltx   = require('../lib/kerneltx.js')
-var haste      = require('../lib/Haste.js').getHaste()
-var _          = require('lodash')
-
-var createKernelTx = kerneltx.createKernelTx
-var _runKernel = haste.runKernel
-var _runCoinKernelOnGraph = haste.runCoinKernelOnGraph
+const _           = require('lodash');
+const bitcoin     = require('bitcoinjs-lib');
+const buffertools = require('buffertools');
+const Transaction = bitcoin.Transaction;
 
 /**
- * Kernel.
- * @constructor
+ * dustThreshold
+ * @const {number}
  */
-function Kernel (kernelName, sim) {
-  this.name = kernelName
-  this.simulation = sim
+const dustThreshold = 546
+
+/**
+ * @return {string} payload
+ */
+function createPayload (ins, outs, opid, outValues) {
+  return '(' +
+    JSON.stringify(_.range(ins)) + ', ' +
+    JSON.stringify(_.range(outs)) + ', ' +
+    outs + ') ' +
+    opid.toString() + ' ' + JSON.stringify(outValues)
 }
 
 /**
- * Process transaction
- * @param {string} tx
- * @return {[Object]} 
+ * Remove spent coins
  */
-Kernel.prototype.processTx = function (tx, inputCoins) {
-  return (inputCoins)
-       ? runKernel (tx, inputCoins)
-       : runCoinKernelOnGraph(tx, this.simulation.transactions)
+function removeSpentCoins (unspentCoins, spentCoins) {
+  _.each(spentCoins, function(coin) {
+    unspentCoins.splice(_.findIndex(unspentCoins, coin), 1)
+  })
 }
+
+/**
+ * Select coins
+ * @return {[Object]}
+ */
+function selectCoins (unspentCoins, coinValueFn, neededSum) {
+  var total = 0
+  
+  var selected = _.takeWhile(unspentCoins, function (n) {
+    return total < neededSum ? (total += coinValueFn (n)) && true : false
+  })
+
+  if (total < neededSum)
+    throw new Error ("Not enough coins!")
+
+  return selected
+}
+
+/**
+ * Compose colored send transaction skeleton
+ * @return {Object}
+ */
+function composeColoredSendTx (unspentCoins, targets, changeAddress, colorName) {
+  function coinValueFn (coin) {
+    return coin.cv.getValue()
+  }
+
+  var unspentColoredCoins = _.filter(unspentCoins, function (coin) {
+    if (coin.cv)
+      return coin.cv.getColor().getName() === colorName
+    return false
+  })
+  
+  targets = _.clone(targets)
+  var neededSum = _.sum(targets, 'value')
+  var coins     = selectCoins(unspentColoredCoins, coinValueFn, neededSum)
+  var inputSum  = _.sum(coins, 'value')
+  var change    = inputSum - neededSum   
+
+  removeSpentCoins (unspentCoins, coins)
+  
+  if (change > 0) {
+    targets.push({address: changeAddress, value: change})
+  }
     
-/**
- * run kernel
- * @param {string} tx
- * @param {[Object]} unputCoins
- * @return {[Object]}
- */
-function runKernel (tx, inputCoins) {
-
-  var optx = createKernelTx (tx) 
-  var coins = _.map(_runKernel(JSON.stringify(optx)), JSON.parse)
-
-  return coins
+  return {inputs: coins, targets: targets}
 }
 
 /**
- * run kernel on graph
- * @param {string} tx
- * @param {[Transaction]} txs
- * @return {[Object]}
+ * Compose colored issue transactions skeleton
+ * @return {Object}
  */
-function runCoinKernelOnGraph (tx, txs) {
-  var transactions = _.chain(txs)
-                     .map(createKernelTx)
-                     .map(JSON.stringify)
-                     .value()
+function composeColoredIssueTx (targets) {
+  return {inputs: [], targets: targets}
+}
+
+/**
+ * Compose bitcoin transaction
+ * @return {Transaction}
+ */
+function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
+  var tx = new Transaction()
+
+  var index = 0
+  var unspentUncoloredCoins = _.reject(unspentCoins, 'cv')
+ 
+  var coloredTargets = coloredTx.targets
+  var coloredInputs  = coloredTx.inputs
+  var fee = 10000
+  var uncoloredNeeded   = coloredTargets.length * dustThreshold + fee
+
+  _.each(coloredTargets, function(target) {
+    tx.addOutput(target.address, target.value)
+    index++
+  })
+ 
+  _.each(coloredInputs, function(coin) {
+      tx.addInput(coin.txid, coin.index)
+      uncoloredNeeded -= coin.value
+  })
+
+  var uncoloredSum = 0
+  var uncoloredInputs = []
+  var change = 0
+    
+  if (uncoloredNeeded > 0) {
+    uncoloredInputs = selectCoins(
+      unspentUncoloredCoins,
+      function (coin) { return coin.value },
+      uncoloredNeeded
+    )
+    
+    uncoloredSum        = _.sum(uncoloredInputs, 'value')
+    _.each(uncoloredInputs, function(coin) {
+      tx.addInput(coin.txid, coin.index)
+    })
+    change = uncoloredSum - uncoloredNeeded - _.sum(coloredTargets, 'value')
   
-  var optx = JSON.stringify(createKernelTx(tx))
+    if (change > 0) {
+      tx.addOutput(changeAddress, change)
+    }
+  }
+
+  var outValues = _.pluck(coloredTargets, 'value').concat(
+    change == 0 ? [] : [change])
   
-  var coins = _.map(_runCoinKernelOnGraph(transactions, optx), JSON.parse)
+  var ins =
+    (coloredInputs === [])
+    ? coloredInputs.length + uncoloredInputs.length
+    : 0
 
-  return coins
-}
+  var outs =
+    change
+    ? coloredTargets.length + 1
+    : coloredTargets.length
 
+  var opid =
+    coloredInputs.length
+    ? 0
+    : 1
+  
+  var payload = createPayload (ins, outs, opid, outValues)
+    
+  tx.addOutput(bitcoin.scripts.nullDataOutput(new Buffer(payload)), 0)
+    
+  removeSpentCoins(unspentCoins, uncoloredInputs)
 
-/**
- * Color
- * @constructor
- * @param {string} colorID
- * @param {Kernel} kernel
- * @param {string} name
- */
-function Color (kernel, colorID, name) {
-  this.name    = name
-  this.kernel  = kernel
-  this.colorID = colorID
-}
-
-Color.prototype.getName = function () {
-  return this.name
-}
-
-/**
- * Get kernel
- * @return {Kernel}
- */
-  Color.prototype.getKernel = function () {
-  return this.kernel
-}
-
-/**
- * ColorValue
- * @constructor
- * @param {number} value
- */
-function ColorValue (color, value) {  
-  this.color = color
-  this.value = value
-}
-
-/**
- * Get color
- * @return {Color}
- */
-ColorValue.prototype.getColor = function () {
-  return this.color
-}
-
-/**
- * getValue
- * @return {number}
- */
-ColorValue.prototype.getValue = function() {
-  return this.value
+  return tx
 }
 
 module.exports = {
-  Kernel      : Kernel,
-  Color       : Color,
-  ColorValue  : ColorValue
+    composeColoredSendTx  : composeColoredSendTx
+  , composeBitcoinTx      : composeBitcoinTx
+  , composeColoredIssueTx : composeColoredIssueTx
+  , selectCoins           : selectCoins
+  , removeSpentCoins      : removeSpentCoins
 }
