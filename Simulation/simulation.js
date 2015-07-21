@@ -68,7 +68,14 @@ function Simulation(name) {
  * kernel
  */
 Simulation.prototype.kernel = function(kernelName) {
-  var kernel = new Kernel(this, kernelName)
+  var kernel
+  switch (kernelName) {
+    case 'toy' :
+      kernel = new Kernel(kernelName, this)
+      break
+    default:
+      throw new Error("Kernel does not exist!")
+  }
   return kernel
 }
 
@@ -122,6 +129,7 @@ function Wallet(simulation, name) {
   this.pubkey     = this.privkey.pub
   this.address    = this.pubkey.getAddress(network).toString()
   this.coins      = []
+  this.colors     = {}
 }
 
 /**
@@ -154,7 +162,7 @@ Wallet.prototype.issueCoin = function (kernel, value) {
   tx   = this.signTx(tx)
   
   sim.addTx(tx)   
-  var coins = kernel.runKernel(tx)
+  var coins = kernel.processTx(tx)
   var color = new Color(kernel, tx.getId())
 
   coins[0].cv = new ColorValue (color, coins[0].value)
@@ -218,15 +226,21 @@ Wallet.prototype.send = function (colorValue, target) {
     [{ 'address': target.getAddress(), 'value': colorValue.value }],
     this.getAddress()
   )
+
+  var coloredOutputsNumber = coloredTx.targets.length
+  
   var tx = compose.composeBitcoinTx(
     coloredTx, this.getUnspentCoins(), this.getAddress()
   )
   
   tx = this.signTx(tx)
   sim.addTx(tx)
-  sim.addCoins(
-    colorValue.color.kernel.runCoinKernelOnGraph(tx, sim.transactions)
-  )
+
+  var coins = colorValue.color.kernel.processTx(tx)
+  for (var i = 0; i < coloredOutputsNumber; i++)
+    coins[i].cv = new ColorValue (colorValue.color, coins[i].value)
+
+  sim.addCoins(coins)
 }
 
 
