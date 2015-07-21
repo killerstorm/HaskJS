@@ -20,12 +20,19 @@ function createPayload (ins, outs, opid, outValues) {
     opid.toString() + ' ' + JSON.stringify(outValues)
 }
 
+/**
+ * Remove spent coins
+ */
 function removeSpentCoins (unspentCoins, spentCoins) {
   _.each(spentCoins, function(coin) {
     unspentCoins.splice(_.findIndex(unspentCoins, coin), 1)
   })
 }
 
+/**
+ * Select coins
+ * @return {[Object]}
+ */
 function selectCoins (unspentCoins, coinValueFn, neededSum) {
   var total = 0
   
@@ -38,15 +45,20 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
 
   return selected
 }
-   
+
+/**
+ * Compose colored send transaction skeleton
+ * @return {Object}
+ */
 function composeColoredSendTx (unspentCoins, targets, changeAddress) {
   function coinValueFn (coin) {
-    return coin.value
+    return coin.cv.getValue()
   }
 
+  var unspentColoredCoins = _.filter(unspentCoins, 'cv')
   targets = _.clone(targets)
   var neededSum = _.sum(targets, 'value')
-  var coins     = selectCoins(unspentCoins, coinValueFn, neededSum)
+  var coins     = selectCoins(unspentColoredCoins, coinValueFn, neededSum)
   var inputSum  = _.sum(coins, 'value')
   var change    = inputSum - neededSum   
 
@@ -58,16 +70,24 @@ function composeColoredSendTx (unspentCoins, targets, changeAddress) {
     
   return {inputs: coins, targets: targets}
 }
- 
+
+/**
+ * Compose colored issue transactions skeleton
+ * @return {Object}
+ */
 function composeColoredIssueTx (targets) {
   return {inputs: [], targets: targets}
 }
- 
+
+/**
+ * Compose bitcoin transaction
+ * @return {Transaction}
+ */
 function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
   var tx = new Transaction()
 
   var index = 0
-  unspentCoins = _.reject(unspentCoins, 'cv')
+  var unspentUncoloredCoins = _.reject(unspentCoins, 'cv')
  
   var coloredTargets = coloredTx.targets
   var coloredInputs  = coloredTx.inputs
@@ -90,7 +110,7 @@ function composeBitcoinTx (coloredTx, unspentCoins, changeAddress) {
     
   if (uncoloredNeeded > 0) {
     uncoloredInputs = selectCoins(
-      unspentCoins,
+      unspentUncoloredCoins,
       function (coin) { return coin.value },
       uncoloredNeeded
     )
