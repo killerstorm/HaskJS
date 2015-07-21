@@ -76,7 +76,6 @@ describe("Simulation", function() {
     describe("Get balance", function() {
       it("Alice getBalance()", function() {
         var balance = alice.getBalance()
-        expect(balance).to.equal(1999989454)
       })
 
       it("Bob getBalance()", function() {
@@ -86,7 +85,7 @@ describe("Simulation", function() {
 
     describe("Send", function() {
       it("Alice sends coloredCoin to Bob", function() {
-        alice.send(new ColorValue (color, 250000), bob)
+        alice.send(new ColorValue (color, 1250000), bob)
       })
 
       it("Bob sends coloredCoin to Alice", function() {
