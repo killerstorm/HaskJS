@@ -65,12 +65,26 @@ function runCoinKernelOnGraph (tx, txs) {
  * Color
  * @constructor
  * @param {string} colorID
+ * @param {Kernel} kernel
+ * @param {string} name
  */
-function Color (kernel, colorID) {
+function Color (kernel, colorID, name) {
+  this.name    = name
   this.kernel  = kernel
   this.colorID = colorID
 }
 
+Color.prototype.getName = function () {
+  return this.name
+}
+
+/**
+ * Get kernel
+ * @return {Kernel}
+ */
+  Color.prototype.getKernel = function () {
+  return this.kernel
+}
 
 /**
  * ColorValue
@@ -80,6 +94,14 @@ function Color (kernel, colorID) {
 function ColorValue (color, value) {  
   this.color = color
   this.value = value
+}
+
+/**
+ * Get color
+ * @return {Color}
+ */
+ColorValue.prototype.getColor = function () {
+  return this.color
 }
 
 /**
