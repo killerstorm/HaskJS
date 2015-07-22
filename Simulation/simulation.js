@@ -109,14 +109,14 @@ Simulation.prototype.addCoins = function (coins) {
  * @param {string} addr
  * @return {[Object]}
  */
-Simulation.prototype.getUnspentCoins = function (addr) {
+Simulation.prototype.getUnspentCoins = function (address) {
   var unspent = []
   var sim = this
   _.map(sim.transactions, function (tx) {
     var index = 0
     _.each(tx.outs, function (out) {
-      if (out.script.chunks.length != 2 &&
-          getOutputAddress(out.script) == addr) {
+      var outputAddress = getOutputAddress (out.script)
+      if (outputAddress === address) {
         _.find(sim.coins, function (c) {
                 return (c.txid == tx.getId() &&
                         c.index == index     &&
@@ -184,6 +184,7 @@ Wallet.prototype.issueCoin = function (kernel, value, colorName) {
   coins[0].cv = new ColorValue (color, coins[0].value)
 
   sim.addCoins(coins)
+  this.colors[colorName] = color 
 
   return color
 }
@@ -308,6 +309,8 @@ Wallet.prototype.getAddress = function () {
  *@return {string} address
  */
 function getOutputAddress (outScript) {
+  if (outScript.chunks.length === 2)
+    return null
   return bitcoin.Address.fromOutputScript(outScript, network).toString()
 }
   
