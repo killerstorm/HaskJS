@@ -301,7 +301,9 @@ Wallet.prototype.getBalance = function (colorName) {
   }
   else {
     var color = this.colors[colorName]
-    selectedCoins = _.filter(coins, 'cv', color)
+    selectedCoins = _.filter(coins, function (coin) {
+      return coin.cv ? coin.cv.getColor() === color : false
+    })
     balance = _.sum(selectedCoins, function (coin) { return coin.cv.getValue() })
   }
   
