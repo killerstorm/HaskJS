@@ -71,13 +71,16 @@ function runCoinKernelOnGraph (tx, txs) {
  * @param {string} name
  */
 function Color (kernel, colorID, name) {
-  this.name    = name
-  this.kernel  = kernel
-  this.colorID = colorID
+  this._name    = name
+  this._kernel  = kernel
+  this._colorID = colorID
 }
-
+/**
+ * Get name
+ * @return {string}
+ */
 Color.prototype.getName = function () {
-  return this.name
+  return this._name
 }
 
 /**
@@ -85,8 +88,17 @@ Color.prototype.getName = function () {
  * @return {Kernel}
  */
   Color.prototype.getKernel = function () {
-  return this.kernel
+  return this._kernel
 }
+
+/**
+ * Get ID
+ * @return {string}
+ */
+Color.prototype.getID = function () {
+  return this._colorID
+}
+
 
 /**
  * ColorValue
@@ -94,8 +106,8 @@ Color.prototype.getName = function () {
  * @param {number} value
  */
 function ColorValue (color, value) {  
-  this.color = color
-  this.value = value
+  this._color = color
+  this._value = value
 }
 
 /**
@@ -103,7 +115,7 @@ function ColorValue (color, value) {
  * @return {Color}
  */
 ColorValue.prototype.getColor = function () {
-  return this.color
+  return this._color
 }
 
 /**
@@ -111,7 +123,15 @@ ColorValue.prototype.getColor = function () {
  * @return {number}
  */
 ColorValue.prototype.getValue = function() {
-  return this.value
+  return this._value
+}
+
+/**
+ * Get colorID
+ * @return {string}
+ */
+ColorValue.prototype.getColorID = function() {
+  return this.getColor().getID()
 }
 
 module.exports = {
