@@ -21,10 +21,12 @@ function Kernel (kernelName, sim) {
  * @param {string} tx
  * @return {[Object]} 
  */
-Kernel.prototype.processTx = function (tx, inputCoins) {
-  return (inputCoins)
-       ? runKernel (tx, inputCoins)
-       : runCoinKernelOnGraph(tx, this.simulation.transactions)
+Kernel.prototype.processTx = function (tx, coloredOutsNumber, color) {
+  var coins = runCoinKernelOnGraph(tx, this.simulation.transactions)
+  for (var i = 0; i < coloredOutsNumber; i++)
+    coins[i].cv = new ColorValue (color, coins[i].value)
+
+  return coins
 }
     
 /**
