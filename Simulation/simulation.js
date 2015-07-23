@@ -1,10 +1,11 @@
 var _           = require('lodash')
 var bitcoin     = require('bitcoinjs-lib')
-var kernel      = require('./kernel.js')
 var base58      = require('base58-native')
+var Promise     = require('bluebird')
+var assert      = require('assert')
 var compose     = require('./composeTx.js')
 var bc          = require('./bitcoinclient')
-var Promise     = require('bluebird')
+var kernel      = require('./kernel.js')
 var testdata    = require('./testdata')
 
 var Color       = kernel.Color
@@ -241,9 +242,10 @@ Wallet.prototype.getCoins = function (amount) {
  */
 Wallet.prototype.send = function (colorValue, targetWallet) {
   var sim = this.simulation
+  var color = colorValue.getColor()
   var coloredTx = compose.composeColoredSendTx(
-    this.getUnspentCoins(),
-    { address : targetWallet.getAddress(), value : colorValue },
+    this.getUnspentCoins(color.getName()),
+    [{ address : targetWallet.getAddress(), value : colorValue }],
     this.getAddress()
   )
 
@@ -256,7 +258,6 @@ Wallet.prototype.send = function (colorValue, targetWallet) {
   tx = this.signTx(tx)
   sim.addTx(tx)
 
-  var color = colorValue.getColor()
   var coins = color.getKernel().processTx(tx, coloredOutsNumber, color)
 
   sim.addCoins(coins)
@@ -290,21 +291,19 @@ Wallet.prototype.signTx = function (tx) {
  * @param {string} colorName
  * @return {number} balance
  */
-Wallet.prototype.getBalance = function (colorName) {
+Wallet.prototype.getBalance = function (colorName) {  
   var coins = this.getUnspentCoins()
-  var selectedCoins
   var balance
   
-  if (!colorName) {
-    selectedCoins = _.reject(coins, 'cv')
-    balance       = _.sum(selectedCoins, 'value')
-  }
+  if (!colorName)
+    balance = _.chain(coins).reject('cv').sum('value').value()
   else {
     var color = this.colors[colorName]
-    selectedCoins = _.filter(coins, function (coin) {
-      return coin.cv ? coin.cv.getColor() === color : false
-    })
-    balance = _.sum(selectedCoins, function (coin) { return coin.cv.getValue() })
+    
+    balance = _.chain(coins).filter('cv')
+              .filter(function (coin) { return coin.cv.getColor() === color })
+              .sum(function (coin) { return coin.cv.getValue() })
+              .value()
   }
   
   return balance
