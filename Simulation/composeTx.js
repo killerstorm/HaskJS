@@ -50,28 +50,30 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
  * Compose colored send transaction skeleton
  * @return {Object}
  */
-function composeColoredSendTx (unspentCoins, targets, changeAddress, colorName) {
+function composeColoredSendTx (unspentCoins, target, changeAddress) {
   function coinValueFn (coin) {
     return coin.cv.getValue()
   }
 
+  var colorName = target.value.getColor().getName()
   var unspentColoredCoins = _.filter(unspentCoins, function (coin) {
     if (coin.cv)
       return coin.cv.getColor().getName() === colorName
     return false
   })
   
-  targets = _.clone(targets)
-  var neededSum = _.sum(targets, 'value')
+  target = _.clone(target)
+  var neededSum = target.value.getValue()
   var coins     = selectCoins(unspentColoredCoins, coinValueFn, neededSum)
-  var inputSum  = _.sum(coins, 'value')
+  var inputSum  = _.sum(coins, coinValueFn)
   var change    = inputSum - neededSum   
 
   removeSpentCoins (unspentCoins, coins)
   
-  if (change > 0) {
-    targets.push({address: changeAddress, value: change})
-  }
+  var targets = [{address : target.address, value : target.value.getValue()}]
+  
+  if (change > 0) 
+    targets.push({address: changeAddress, value : change})
     
   return {inputs: coins, targets: targets}
 }
