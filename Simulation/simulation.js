@@ -237,15 +237,14 @@ Wallet.prototype.getCoins = function (amount) {
 /**
  * Send
  * @param {ColorValue} colorValue
- * @param {Wallet} target
+ * @param {Wallet} targetWallet
  */
-Wallet.prototype.send = function (colorValue, target) {
+Wallet.prototype.send = function (colorValue, targetWallet) {
   var sim = this.simulation
   var coloredTx = compose.composeColoredSendTx(
     this.getUnspentCoins(),
-    [{ 'address': target.getAddress(), 'value': colorValue.getValue() }],
-    this.getAddress(),
-    colorValue.getColor().getName()
+    { address : targetWallet.getAddress(), value : colorValue },
+    this.getAddress()
   )
 
   var coloredOutputsNumber = coloredTx.targets.length
