@@ -287,11 +287,27 @@ Wallet.prototype.signTx = function (tx) {
 
 /**
  * Get balance
+ * @param {string} colorName
  * @return {number} balance
  */
-Wallet.prototype.getBalance = function () {
-  this.getUnspentCoins()
-  return _.sum(this.coins, "value")
+Wallet.prototype.getBalance = function (colorName) {
+  var coins = this.getUnspentCoins()
+  var selectedCoins
+  var balance
+  
+  if (!colorName) {
+    selectedCoins = _.reject(coins, 'cv')
+    balance       = _.sum(selectedCoins, 'value')
+  }
+  else {
+    var color = this.colors[colorName]
+    selectedCoins = _.filter(coins, function (coin) {
+      return coin.cv ? coin.cv.getColor() === color : false
+    })
+    balance = _.sum(selectedCoins, function (coin) { return coin.cv.getValue() })
+  }
+  
+  return balance
 }
 
 /**
