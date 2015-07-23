@@ -1,10 +1,11 @@
 var _           = require('lodash')
 var bitcoin     = require('bitcoinjs-lib')
-var kernel      = require('./kernel.js')
 var base58      = require('base58-native')
+var Promise     = require('bluebird')
+var assert      = require('assert')
 var compose     = require('./composeTx.js')
 var bc          = require('./bitcoinclient')
-var Promise     = require('bluebird')
+var kernel      = require('./kernel.js')
 var testdata    = require('./testdata')
 
 var Color       = kernel.Color
@@ -109,14 +110,14 @@ Simulation.prototype.addCoins = function (coins) {
  * @param {string} addr
  * @return {[Object]}
  */
-Simulation.prototype.getUnspentCoins = function (addr) {
+Simulation.prototype.getUnspentCoins = function (address) {
   var unspent = []
   var sim = this
   _.map(sim.transactions, function (tx) {
     var index = 0
     _.each(tx.outs, function (out) {
-      if (out.script.chunks.length != 2 &&
-          getOutputAddress(out.script) == addr) {
+      var outputAddress = getOutputAddress (out.script)
+      if (outputAddress === address) {
         _.find(sim.coins, function (c) {
                 return (c.txid == tx.getId() &&
                         c.index == index     &&
@@ -177,13 +178,14 @@ Wallet.prototype.issueCoin = function (kernel, value, colorName) {
   
   tx   = this.signTx(tx)
   
-  sim.addTx(tx)   
-  var coins = kernel.processTx(tx)
+  sim.addTx(tx)
+
   var color = new Color(kernel, tx.getId(), colorName)
 
-  coins[0].cv = new ColorValue (color, coins[0].value)
+  var coins = kernel.processTx(tx, coloredTx.targets.length, color)
 
   sim.addCoins(coins)
+  this.colors[colorName] = color 
 
   return color
 }
@@ -236,18 +238,18 @@ Wallet.prototype.getCoins = function (amount) {
 /**
  * Send
  * @param {ColorValue} colorValue
- * @param {Wallet} target
+ * @param {Wallet} targetWallet
  */
-Wallet.prototype.send = function (colorValue, target) {
+Wallet.prototype.send = function (colorValue, targetWallet) {
   var sim = this.simulation
+  var color = colorValue.getColor()
   var coloredTx = compose.composeColoredSendTx(
-    this.getUnspentCoins(),
-    [{ 'address': target.getAddress(), 'value': colorValue.getValue() }],
-    this.getAddress(),
-    colorValue.getColor().getName()
+    this.getUnspentCoins(color.getName()),
+    [{ address : targetWallet.getAddress(), value : colorValue }],
+    this.getAddress()
   )
 
-  var coloredOutputsNumber = coloredTx.targets.length
+  var coloredOutsNumber = coloredTx.targets.length
   
   var tx = compose.composeBitcoinTx(
     coloredTx, this.getUnspentCoins(), this.getAddress()
@@ -256,9 +258,7 @@ Wallet.prototype.send = function (colorValue, target) {
   tx = this.signTx(tx)
   sim.addTx(tx)
 
-  var coins = colorValue.getColor().getKernel().processTx(tx)
-  for (var i = 0; i < coloredOutputsNumber; i++)
-    coins[i].cv = new ColorValue (colorValue.getColor(), coins[i].value)
+  var coins = color.getKernel().processTx(tx, coloredOutsNumber, color)
 
   sim.addCoins(coins)
 }
@@ -288,11 +288,25 @@ Wallet.prototype.signTx = function (tx) {
 
 /**
  * Get balance
+ * @param {string} colorName
  * @return {number} balance
  */
-Wallet.prototype.getBalance = function () {
-  this.getUnspentCoins()
-  return _.sum(this.coins, "value")
+Wallet.prototype.getBalance = function (colorName) {  
+  var coins = this.getUnspentCoins()
+  var balance
+  
+  if (!colorName)
+    balance = _.chain(coins).reject('cv').sum('value').value()
+  else {
+    var color = this.colors[colorName]
+    
+    balance = _.chain(coins).filter('cv')
+              .filter(function (coin) { return coin.cv.getColor() === color })
+              .sum(function (coin) { return coin.cv.getValue() })
+              .value()
+  }
+  
+  return balance
 }
 
 /**
@@ -308,6 +322,8 @@ Wallet.prototype.getAddress = function () {
  *@return {string} address
  */
 function getOutputAddress (outScript) {
+  if (outScript.chunks.length === 2)
+    return null
   return bitcoin.Address.fromOutputScript(outScript, network).toString()
 }
   

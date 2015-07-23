@@ -66,7 +66,7 @@ describe("Simulation", function() {
       })
     })
 
-    describe("IssueCoin must retun new Color object", function () {
+    describe("IssueCoin must return new Color object", function () {
       it("Alice issues a Coin", function () {
         color = alice.issueCoin (kernel, 5000000, 'test_color')
         expect(color).to.be.an.instanceof(Color)
@@ -75,21 +75,26 @@ describe("Simulation", function() {
     
     describe("Get balance", function() {
       it("Alice getBalance()", function() {
-        var balance = alice.getBalance()
+        var balance = alice.getBalance('test_color')
+        expect(balance).to.be.equal(5000000)
       })
 
       it("Bob getBalance()", function() {
-        var balance = bob.getBalance()
+        var balance = bob.getBalance('test_color')
+        expect(balance).to.be.equal(0)
       })
     })
 
     describe("Send", function() {
       it("Alice sends coloredCoin to Bob", function() {
         alice.send(new ColorValue (color, 1250000), bob)
+        expect(alice.getBalance('test_color')).to.be.equal(3750000)
       })
 
       it("Bob sends coloredCoin to Alice", function() {
+        bob.colors['test_color'] = color
         bob.send(new ColorValue (color, 250000), alice)
+        expect(bob.getBalance('test_color')).to.be.equal(1000000)
       })
 
     })        
