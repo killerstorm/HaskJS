@@ -177,11 +177,11 @@ Wallet.prototype.issueCoin = function (kernel, value, colorName) {
   
   tx   = this.signTx(tx)
   
-  sim.addTx(tx)   
-  var coins = kernel.processTx(tx)
+  sim.addTx(tx)
+
   var color = new Color(kernel, tx.getId(), colorName)
 
-  coins[0].cv = new ColorValue (color, coins[0].value)
+  var coins = kernel.processTx(tx, coloredTx.targets.length, color)
 
   sim.addCoins(coins)
   this.colors[colorName] = color 
@@ -247,7 +247,7 @@ Wallet.prototype.send = function (colorValue, targetWallet) {
     this.getAddress()
   )
 
-  var coloredOutputsNumber = coloredTx.targets.length
+  var coloredOutsNumber = coloredTx.targets.length
   
   var tx = compose.composeBitcoinTx(
     coloredTx, this.getUnspentCoins(), this.getAddress()
@@ -256,9 +256,8 @@ Wallet.prototype.send = function (colorValue, targetWallet) {
   tx = this.signTx(tx)
   sim.addTx(tx)
 
-  var coins = colorValue.getColor().getKernel().processTx(tx)
-  for (var i = 0; i < coloredOutputsNumber; i++)
-    coins[i].cv = new ColorValue (colorValue.getColor(), coins[i].value)
+  var color = colorValue.getColor()
+  var coins = color.getKernel().processTx(tx, coloredOutsNumber, color)
 
   sim.addCoins(coins)
 }
