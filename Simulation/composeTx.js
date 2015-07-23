@@ -50,31 +50,47 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
  * Compose colored send transaction skeleton
  * @return {Object}
  */
-function composeColoredSendTx (unspentCoins, target, changeAddress) {
+function composeColoredSendTx (unspentCoins, targets, changeAddress) {
   function coinValueFn (coin) {
     return coin.cv.getValue()
   }
 
-  var colorName = target.value.getColor().getName()
+  function getColorId (cv) {
+    return cv.getColorID()
+  }
+
+  function getTargetValue (target) {
+    return target.value.getValue()
+  }
+
+  var outputColorValues = _.map(targets, 'value')
+  var colorIds          = _.uniq(_.map(outputColorValues, getColorId))
+  
+  if(colorIds.length > 1)
+    throw new Error ('Only one color supported!')
+    
+  var colorID = _.head(colorIds)
   var unspentColoredCoins = _.filter(unspentCoins, function (coin) {
     if (coin.cv)
-      return coin.cv.getColor().getName() === colorName
+      return coin.cv.getColorID() === colorID
     return false
   })
   
-  target = _.clone(target)
-  var neededSum = target.value.getValue()
+  targets = _.clone(targets)
+  var neededSum = _.sum(targets, getTargetValue) 
   var coins     = selectCoins(unspentColoredCoins, coinValueFn, neededSum)
   var inputSum  = _.sum(coins, coinValueFn)
   var change    = inputSum - neededSum   
 
   removeSpentCoins (unspentCoins, coins)
   
-  var targets = [{address : target.address, value : target.value.getValue()}]
-  
+  _.each(targets, function (target) {
+    target.value = target.value.getValue()
+  })
+    
   if (change > 0) 
     targets.push({address: changeAddress, value : change})
-    
+
   return {inputs: coins, targets: targets}
 }
 
