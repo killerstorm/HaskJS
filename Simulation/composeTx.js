@@ -48,6 +48,9 @@ function selectCoins (unspentCoins, coinValueFn, neededSum) {
 
 /**
  * Compose colored send transaction skeleton
+ * @param {[Object]} unspentCoins
+ * @param {[Object]} targets
+ * @param {string} changeAddress
  * @return {Object}
  */
 function composeColoredSendTx (unspentCoins, targets, changeAddress) {
