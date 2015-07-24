@@ -12,6 +12,7 @@ import Debug.Trace
 import Data.Maybe
 import qualified Data.Map as Map
 import Src.Types
+import Data.List (nub)
 
 properCS :: WrappedCS cs -> Bool
 properCS (JustCS _) = True
@@ -58,9 +59,13 @@ parseMuxShape s = case reads s of
   [res] -> Just res
   _ -> Nothing
      
-toyMuxCoinKernel :: WCSCoinKernel String cs -> WCSCoinKernel String cs
-toyMuxCoinKernel innerKernel str = case parseMuxShape str of
-  Just (muxShape, rest) -> strictMux (innerKernel rest) muxShape
+
+data CKContext = CKContext { tx :: Tx, payload_fragment :: String }
+data ToyCoinState = ToyCoinState { colorID :: String, value :: Integer }
+
+toyMuxCoinKernel :: WCSCoinKernel CKContext cs -> WCSCoinKernel CKContext cs
+toyMuxCoinKernel innerKernel ctx = case parseMuxShape (payload_fragment ctx) of
+  Just (muxShape, rest) -> strictMux (innerKernel (CKContext (tx ctx) rest)) muxShape
   Nothing -> const []
  
  
@@ -69,24 +74,29 @@ parseId s = case reads s of
   [res] -> Just res
   _     -> Nothing
   
-toyDispatchCoinKernel :: Map.Map Int (WCSCoinKernel String cs) -> WCSCoinKernel String cs
-toyDispatchCoinKernel table str = case parseId str of
+
+toyDispatchCoinKernel :: Map.Map Int (WCSCoinKernel CKContext cs) -> WCSCoinKernel CKContext cs
+toyDispatchCoinKernel table ctx = case parseId (payload_fragment ctx) of
   Just (opid, rest) -> case Map.lookup opid table of
-    Just ke -> ke rest
+    Just ke -> ke (CKContext (tx ctx) rest)
     Nothing -> const []
   Nothing -> const []
                                        
-transferCK :: String -> [Integer] -> [Integer]
-transferCK op in_values =  let out_values :: [Integer]
-                               out_values = read op
-                           in if sum in_values == sum out_values
-                                    then out_values
-                                    else []                            
+transferCK :: CKContext -> [ToyCoinState] -> [ToyCoinState]
+transferCK ctx in_coinstates =  let out_values :: [Integer]
+                                    out_values = read (payload_fragment ctx)
+                                    colorIDs = nub (map colorID in_coinstates)
+                                    in_values = map value in_coinstates
+                                in if (length colorIDs == 1) 
+                                      && (sum in_values) == (sum out_values))
+                                   then map (ToyCoinState (colorIDs !! 0)) out_values
+                                   else []                            
 
-issueCK :: String -> [Integer] -> [Integer]
-issueCK op in_values = if null in_values
-                          then out_values
-                          else []
-                       where
-                         out_values :: [Integer]
-                         out_values = read op
+issueCK :: CKContext -> [ToyCoinState] -> [ToyCoinState]
+issueCK ctx in_coinstates = if null in_coinstates
+                            then map (ToyCoinState myColorID) out_values
+                            else []
+                        where
+                          out_values :: [Integer]
+                          out_values = read (payload_fragment ctx)
+                          myColorID = txid (tx ctx)
